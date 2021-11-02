@@ -55,7 +55,7 @@ def open_raster(path, file_name):  # later instead of path and file_name raster_
     # print(f'max band_1 {np.nanmax(band_1)}') # just for testing
 
 
-def adjust_clc(path_clc):
+def adjust_clc(path_clc, clc_name):
     """
     The CLC values are divided into six new classes
     ----------
@@ -66,16 +66,55 @@ def adjust_clc(path_clc):
     Returns
     -------
     """
-    with rio.open(path_clc) as src:
+    clc_file = os.path.join(path_clc, clc_name)
+
+    with rio.open(clc_file) as src:
         clc_band_1 = src.read(1)
+        ras_meta = src.profile
 
     clc_array = np.array(clc_band_1)
-    clc_array = np.where(clc_array <= 11, 100, clc_array)
-    clc_array = np.where(clc_array <= 22, 200, clc_array)
-    clc_array = np.where(clc_array <= 29, 300, clc_array)
-    clc_array = np.where(clc_array <= 34, 400, clc_array)
-    clc_array = np.where(clc_array <= 39, 500, clc_array)
-    clc_array = np.where(clc_array <= 47, 600, clc_array)
+    clc_array = np.where(clc_array <= 11, 100, clc_array)  # description on google drive
+    clc_array = np.where(clc_array <= 22, 200, clc_array)  # description on google drive
+    clc_array = np.where(clc_array <= 29, 300, clc_array)  # description on google drive
+    clc_array = np.where(clc_array <= 34, 400, clc_array)  # description on google drive
+    clc_array = np.where(clc_array <= 39, 500, clc_array)  # description on google drive
+    clc_array = np.where(clc_array <= 47, 600, clc_array)  # description on google drive
 
-    print(clc_band_1)
-    print(clc_array)
+    ras_meta.update(count=1,
+                    dtype=rio.uint16)
+
+    clc_recl_out = os.path.join(path_clc, str(clc_name[:-4] + "_reclass.tif"))
+    print(clc_recl_out)
+    if not os.path.isfile(clc_recl_out):
+        with rio.open(path_clc + clc_name[:-4] + str("_reclass.tif"), 'w', **ras_meta) as dst:
+            dst.write(clc_array, 1)
+
+
+def reproject(path, filename, path_clc):
+    """
+    If the Sentinel-1 Data and CLC-Data have a different extent, pixel size and epsg, the function will perform a
+    reprojection of CLC-data and a downsampling of the S1-Data.
+    ----------
+    path: string
+        Path to folder with files
+    file_name: string
+        specific file name
+    path_clc: string
+        Path clc file (tif-format)
+    Examples
+    --------
+    Returns
+    -------
+    raster
+        convrted raster files
+    """
+    scene = os.path.join(path, filename)
+    raster = rio.open(scene)
+    print(raster.crs)
+
+    # epsg_clc =
+    # epsg_sen =
+
+    bounds = raster.bounds
+    print(bounds.left, bounds.right, bounds.top, bounds.bottom)
+    # return
