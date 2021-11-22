@@ -95,78 +95,6 @@ def write_file_gdal(gdal_file, out_file):
     return
 
 
-def reproject(path, path_clc, raster_file_list, raster_file_name):
-    """
-    If the Sentinel-1 Data and CLC-Data have a different extent, pixel size and epsg, the function will perform a
-    reprojection of CLC-data and a downsampling of the S1-Data.
-    The CLC file is processed individually. Since the geometric resolution is 100m, only the coordinate system is
-    adjusted. For this the coordinate system is read from the first scene in the raster_file_list and then taken over
-    at gdal.Wrap. Afterwards all sentinel scenes are adjusted. Since the CLC file got the coordinate system of the
-    sentinel scenes, the geometric resolution is adapted to that of the CLC data. For this purpose, the pixel size is
-    read from the CLC data and inserted into gdal.wrap accordingly.
-
-    Parameters
-    ----------
-    path: string
-        Path to folder with files
-    path_clc: string
-        Path to the clc file (tif-format)
-    raster_file_list: list
-        list with paths to Sentinel scenes
-    raster_file_name: list
-        name from each file in the raster_file_list
-    Examples
-    --------
-    Returns
-    -------
-    """
-    clc = gdal.Open(path_clc)
-    s1 = gdal.Open(raster_file_list[0])
-
-    proj_s1 = osr.SpatialReference(wkt=s1.GetProjection())
-    epsg_s1 = proj_s1.GetAttrValue('AUTHORITY', 1)
-    gt_clc = clc.GetGeoTransform()
-    pix_size_clc = gt_clc[1]
-
-    gt = s1.GetGeoTransform()
-    minx = gt[0]
-    maxy = gt[3]
-    maxx = minx + gt[1] * s1.RasterXSize
-    miny = maxy + gt[5] * s1.RasterYSize
-
-    clc_res = gdal.Warp('', clc, format='VRT', dstSRS='EPSG:{}'.format(epsg_s1), xRes=pix_size_clc, yRes=pix_size_clc,
-                        outputType=gdal.GDT_Int16, outputBounds=[minx, miny, maxx, maxy])
-
-    out_clc = path_clc[:-4] + str("_reprojected.tif")
-    write_file_gdal(clc_res, out_clc)
-
-    for i, raster in enumerate(raster_file_list):
-        s1 = gdal.Open(raster_file_list[i])
-
-        gt_clc = clc.GetGeoTransform()
-        psize_clc = gt_clc[1]
-
-        gt = s1.GetGeoTransform()
-        minx = gt[0]
-        maxy = gt[3]
-        maxx = minx + gt[1] * s1.RasterXSize
-        miny = maxy + gt[5] * s1.RasterYSize
-
-        s1_res = gdal.Warp('', s1, format='VRT', xRes=psize_clc, yRes=psize_clc,
-                           outputType=gdal.GDT_Float32, outputBounds=[minx, miny, maxx, maxy])
-
-        out_folder = "S1_resamp"
-        out_folder = os.path.join(path, out_folder)
-
-        if not os.path.isdir(out_folder):   # create directory for resampled Sentinel scenes
-            os.makedirs(out_folder)
-
-        file_name = raster_file_name[i][:-4] + str("_resamp_100m.tif")
-        out_file = os.path.join(out_folder, file_name)   # out_folder + file_name
-
-        write_file_gdal(s1_res, out_file)
-
-
 def adjust_clc(path_clc, clc_name):
     """
     The CLC values are divided into six new classes.
@@ -206,3 +134,77 @@ def adjust_clc(path_clc, clc_name):
             dst.write(clc_array, 1)
 
     return
+
+
+def reproject(path, path_clc, clc_name, raster_file_list, raster_file_name):
+    """
+    If the Sentinel-1 Data and CLC-Data have a different extent, pixel size and epsg, the function will perform a
+    reprojection of CLC-data and a downsampling of the S1-Data.
+    The CLC file is processed individually. Since the geometric resolution is 100m, only the coordinate system is
+    adjusted. For this the coordinate system is read from the first scene in the raster_file_list and then taken over
+    at gdal.Wrap. Afterwards all sentinel scenes are adjusted. Since the CLC file got the coordinate system of the
+    sentinel scenes, the geometric resolution is adapted to that of the CLC data. For this purpose, the pixel size is
+    read from the CLC data and inserted into gdal.wrap accordingly.
+
+    Parameters
+    ----------
+    path: string
+        Path to folder with files
+    path_clc: string
+        Path to the clc file (tif-format)
+    raster_file_list: list
+        list with paths to Sentinel scenes
+    raster_file_name: list
+        name from each file in the raster_file_list
+    Examples
+    --------
+    Returns
+    -------
+    """
+
+    clc_file = os.path.join(path_clc + str(clc_name[:-4] + "_reclass.tif"))
+    clc = gdal.Open(clc_file)
+    s1 = gdal.Open(raster_file_list[0])
+
+    proj_s1 = osr.SpatialReference(wkt=s1.GetProjection())
+    epsg_s1 = proj_s1.GetAttrValue('AUTHORITY', 1)
+    gt_clc = clc.GetGeoTransform()
+    pix_size_clc = gt_clc[1]
+
+    gt = s1.GetGeoTransform()
+    minx = gt[0]
+    maxy = gt[3]
+    maxx = minx + gt[1] * s1.RasterXSize
+    miny = maxy + gt[5] * s1.RasterYSize
+
+    clc_res = gdal.Warp('', clc, format='VRT', dstSRS='EPSG:{}'.format(epsg_s1), xRes=pix_size_clc, yRes=pix_size_clc,
+                        outputType=gdal.GDT_Int16, outputBounds=[minx, miny, maxx, maxy])
+
+    out_clc = clc_file[:-4] + str("_reprojected.tif")
+    write_file_gdal(clc_res, out_clc)
+
+    for i, raster in enumerate(raster_file_list):
+        s1 = gdal.Open(raster_file_list[i])
+
+        gt_clc = clc.GetGeoTransform()
+        psize_clc = gt_clc[1]
+
+        gt = s1.GetGeoTransform()
+        minx = gt[0]
+        maxy = gt[3]
+        maxx = minx + gt[1] * s1.RasterXSize
+        miny = maxy + gt[5] * s1.RasterYSize
+
+        s1_res = gdal.Warp('', s1, format='VRT', xRes=psize_clc, yRes=psize_clc,
+                           outputType=gdal.GDT_Float32, outputBounds=[minx, miny, maxx, maxy])
+
+        out_folder = "S1_resamp"
+        out_folder = os.path.join(path, out_folder)
+
+        if not os.path.isdir(out_folder):   # create directory for resampled Sentinel scenes
+            os.makedirs(out_folder)
+
+        file_name = raster_file_name[i][:-4] + str("_resamp_100m.tif")
+        out_file = os.path.join(out_folder, file_name)   # out_folder + file_name
+
+        write_file_gdal(s1_res, out_file)
