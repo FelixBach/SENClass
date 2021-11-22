@@ -36,6 +36,9 @@ def parse_folder(path, raster_ext):
         raster_file_list = [w.replace('\\', '/') for w in raster_file_list]
         raster_file_name = [w[len(path):-(len(raster_ext) + 1)] for w in raster_file_list]
 
+    # print(raster_file_list)
+    print(f'folder contains {len(raster_file_list)} raster files \n')
+
     return raster_file_list, raster_file_name
 
 
@@ -96,9 +99,9 @@ def write_file_gdal(gdal_file, out_file):
     return
 
 
-def adjust_clc(path_clc, clc_name):
+def reclass_clc(path_clc, clc_name):
     """
-    The CLC values are divided into six new classes.
+    The CLC values are divided into five new classes.
 
     Parameters
     ----------
@@ -120,7 +123,7 @@ def adjust_clc(path_clc, clc_name):
     clc_array = np.array(clc_band_1)
     clc_array = np.where(clc_array <= 11, 100, clc_array)  # description on google drive
     clc_array = np.where(clc_array <= 22, 200, clc_array)  # description on google drive
-    clc_array = np.where(clc_array <= 29, 300, clc_array)  # description on google drive
+    # clc_array = np.where(clc_array <= 29, 300, clc_array)  # description on google drive
     clc_array = np.where(clc_array <= 34, 400, clc_array)  # description on google drive
     clc_array = np.where(clc_array <= 39, 500, clc_array)  # description on google drive
     clc_array = np.where(clc_array <= 47, 600, clc_array)  # description on google drive
@@ -129,15 +132,15 @@ def adjust_clc(path_clc, clc_name):
                     dtype=rio.uint16)
 
     clc_recl_out = os.path.join(path_clc, str(clc_name[:-4] + "_reclass.tif"))
-    print(clc_recl_out)
     if not os.path.isfile(clc_recl_out):
         with rio.open(path_clc + clc_name[:-4] + str("_reclass.tif"), 'w', **ras_meta) as dst:
             dst.write(clc_array, 1)
 
-    return
+    print(f'reclassified clc data output file: {clc_recl_out} \n')
+    return clc_recl_out
 
 
-def reproject(path, path_clc, clc_name, raster_file_list, raster_file_name):
+def reproject(path, clc_reclass, raster_file_list, raster_file_name):
     """
     If the Sentinel-1 Data and CLC-Data have a different extent, pixel size and epsg, the function will perform a
     reprojection of CLC-data and a downsampling of the S1-Data.
@@ -151,7 +154,7 @@ def reproject(path, path_clc, clc_name, raster_file_list, raster_file_name):
     ----------
     path: string
         Path to folder with files
-    path_clc: string
+    clc_reclass: string
         Path to the clc file (tif-format)
     raster_file_list: list
         list with paths to Sentinel scenes
@@ -162,15 +165,19 @@ def reproject(path, path_clc, clc_name, raster_file_list, raster_file_name):
     Returns
     -------
     """
-
-    clc_file = os.path.join(path_clc + str(clc_name[:-4] + "_reclass.tif"))
+    clc_file = clc_reclass
     clc = gdal.Open(clc_file)
     s1 = gdal.Open(raster_file_list[0])
 
-    proj_s1 = osr.SpatialReference(wkt=s1.GetProjection())
-    epsg_s1 = proj_s1.GetAttrValue('AUTHORITY', 1)
+    proj_clc = osr.SpatialReference(wkt=clc.GetProjection())
+    epsg_clc = proj_clc.GetAttrValue('AUTHORITY', 1)
     gt_clc = clc.GetGeoTransform()
     pix_size_clc = gt_clc[1]
+
+    proj_s1 = osr.SpatialReference(wkt=s1.GetProjection())
+    epsg_s1 = proj_s1.GetAttrValue('AUTHORITY', 1)
+    gt_s1 = s1.GetGeoTransform()
+    pix_size_s1 = gt_s1[1]
 
     gt = s1.GetGeoTransform()
     minx = gt[0]
@@ -183,6 +190,8 @@ def reproject(path, path_clc, clc_name, raster_file_list, raster_file_name):
 
     out_clc = clc_file[:-4] + str("_reprojected.tif")
     write_file_gdal(clc_res, out_clc)
+    print(f'reprojected clc file from EPSG {epsg_clc} to EPSG {epsg_s1} \n'
+          f'output file: {out_clc}\n')
 
     for i, raster in enumerate(raster_file_list):
         s1 = gdal.Open(raster_file_list[i])
@@ -209,3 +218,5 @@ def reproject(path, path_clc, clc_name, raster_file_list, raster_file_name):
         out_file = os.path.join(out_folder, file_name)   # out_folder + file_name
 
         write_file_gdal(s1_res, out_file)
+
+        print(f'resampled {i+1} scenes from {pix_size_s1}m to {psize_clc}m')

@@ -6,11 +6,12 @@ sample_selection.py: contains functions to process the geodata
 import pandas as pd
 import numpy as np
 import geodata
+import os
 
 # so far only working for one image
 
 
-def select_samples(path_clc):
+def select_samples(path_clc, path, file_name):
     """
     The function select samples for training and testing
     ----------
@@ -23,12 +24,14 @@ def select_samples(path_clc):
     list
         lists containing the test and training samples for the random forrest algorithm
     """
-    path = "/home/felix/PycharmProjects/SENClass/test_data/s1/S1_resamp/"
-    file_name = "S1A__IW___A_20180115T182621_147_VV_grd_mli_norm_ge_resamp_100m.tif"
+    # path = "/home/felix/PycharmProjects/SENClass/test_data/s1/S1_resamp/"
+    # file_name = "S1A__IW___A_20180115T182621_147_VV_grd_mli_norm_ge_resamp_100m.tif"
 
-    file = geodata.open_raster_gdal(path, file_name)  # open s1 scene
+    resamp = "S1_resamp/"
+    resamp_path = os.path.join(path + resamp)
+    file = geodata.open_raster_gdal(resamp_path, file_name)  # open s1 scene
 
-    clc_file = geodata.open_raster_gdal(path=path_clc, file_name="CLC_subset_reclass.tif")  # open clc data
+    clc_file = geodata.open_raster_gdal(path=path_clc, file_name="CLC_subset_reclass_reprojected.tif")  # open clc data
 
     file = np.array(file.GetRasterBand(1).ReadAsArray())  # read s1 as np.array
     mask = np.array(clc_file.GetRasterBand(1).ReadAsArray())  # read s1 as np.array
@@ -59,8 +62,10 @@ def select_samples(path_clc):
     test_size = int(0.1 * df_size)  # value of 0.1 gives results around 0.6
     training_size = df_size - test_size
 
-    print(f'{training_size} pixels used for training')
-    print(f'{test_size} pixels used for testing')
+    print(f'\n'
+          f'{training_size} pixels used for training \n'
+          f'{test_size} pixels used for testing'
+          f'\n')
 
     lab_col = "Label_nr"
     x = df2.drop(lab_col, axis=1)
