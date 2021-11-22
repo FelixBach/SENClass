@@ -30,6 +30,7 @@ def parse_folder(path, raster_ext):
         list of all raster files in folder
     """
     raster_file_list = []
+    raster_file_name = []
     for file in glob.glob(path + "*" + raster_ext):
         raster_file_list.append(file)
         raster_file_list = [w.replace('\\', '/') for w in raster_file_list]
