@@ -25,21 +25,21 @@ def select_samples(path_ref_p, path, file_name):
         lists containing the test and training samples for the random forrest algorithm
     """
     # path = "/home/felix/PycharmProjects/SENClass/test_data/s1/S1_resamp/"
-    # file_name = "S1A__IW___A_20180115T182621_147_VV_grd_mli_norm_ge_resamp_100m.tif"
+    # file_name = ""
 
-    resamp = "S1_resamp/"
-    resamp_path = os.path.join(path + resamp)
-    file = geodata.open_raster_gdal(resamp_path, file_name)  # open s1 scene
+    resample_folder = "S1_resamp/"
+    resample_path = os.path.join(path + resample_folder)
 
-    clc_file = geodata.open_raster_gdal(path=path_ref_p, file_name="seasonality_10W_40Nv1_3_2020_sub.tif")  # open clc data
+    ref_p_file_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected.tif"
+    ref_p_file = geodata.open_raster_gdal(path=path_ref_p, file_name=ref_p_file_name)  # open reference product
+
+    file = geodata.open_raster_gdal(resample_path, file_name)  # open s1 scene
 
     file = np.array(file.GetRasterBand(1).ReadAsArray())  # read s1 as np.array
-    mask = np.array(clc_file.GetRasterBand(1).ReadAsArray())  # read s1 as np.array
+    mask = np.array(ref_p_file.GetRasterBand(1).ReadAsArray())  # read s1 as np.array
 
     mask_ravel = mask.ravel()  # transform 2d-array to 1d-array
     scene_ravel = file.ravel()  # transform 2d-array to 1d-array
-
-    # print(file)
 
     bands = 1  # more files means more bands, as example five files/scenes means that bands equals five
 

@@ -106,9 +106,9 @@ def reclass_clc(path_ref_p, clc_name):
     Parameters
     ----------
     path_ref_p: string
-        Path clc file (tif-format)
+        Path reference product file
     clc_name: string
-        Specific file name
+        Specific file name (tif-format)
     Examples
     --------
     Returns
@@ -140,10 +140,10 @@ def reclass_clc(path_ref_p, clc_name):
     return clc_recl_out
 
 
-def reproject(path, ref_p_reclass, raster_file_list, raster_file_name):
+def reproject(path, ref_p_name, raster_file_list, raster_file_name):
     """
     If the Sentinel-1 Data and CLC-Data have a different extent, pixel size and epsg, the function will perform a
-    reprojection of CLC-data and a downsampling of the S1-Data.
+    reprojection of reference product and a downsampling of the S1-Data.
     The CLC file is processed individually. Since the geometric resolution is 100m, only the coordinate system is
     adjusted. For this the coordinate system is read from the first scene in the raster_file_list and then taken over
     at gdal.Wrap. Afterwards all sentinel scenes are adjusted. Since the CLC file got the coordinate system of the
@@ -154,8 +154,8 @@ def reproject(path, ref_p_reclass, raster_file_list, raster_file_name):
     ----------
     path: string
         Path to folder with files
-    ref_p_reclass: string
-        Path to the clc file (tif-format)
+    ref_p_name: string
+        Path to the ref_p file (tif-format)
     raster_file_list: list
         list with paths to Sentinel scenes
     raster_file_name: list
@@ -165,14 +165,14 @@ def reproject(path, ref_p_reclass, raster_file_list, raster_file_name):
     Returns
     -------
     """
-    clc_file = ref_p_reclass
-    clc = gdal.Open(clc_file)
+    ref_p_file = ref_p_name
+    ref_p = gdal.Open(ref_p_file)
     s1 = gdal.Open(raster_file_list[0])
 
-    proj_clc = osr.SpatialReference(wkt=clc.GetProjection())
-    epsg_clc = proj_clc.GetAttrValue('AUTHORITY', 1)
-    gt_clc = clc.GetGeoTransform()
-    pix_size_clc = gt_clc[1]
+    proj_ref_p = osr.SpatialReference(wkt=ref_p.GetProjection())
+    epsg_ref_p = proj_ref_p.GetAttrValue('AUTHORITY', 1)
+    gt_ref_p = ref_p.GetGeoTransform()
+    pix_size_clc = gt_ref_p[1]
 
     proj_s1 = osr.SpatialReference(wkt=s1.GetProjection())
     epsg_s1 = proj_s1.GetAttrValue('AUTHORITY', 1)
@@ -185,19 +185,19 @@ def reproject(path, ref_p_reclass, raster_file_list, raster_file_name):
     maxx = minx + gt[1] * s1.RasterXSize
     miny = maxy + gt[5] * s1.RasterYSize
 
-    clc_res = gdal.Warp('', clc, format='VRT', dstSRS='EPSG:{}'.format(epsg_s1), xRes=pix_size_clc, yRes=pix_size_clc,
-                        outputType=gdal.GDT_Int16, outputBounds=[minx, miny, maxx, maxy])
+    ref_p_res = gdal.Warp('', ref_p, format='VRT', dstSRS='EPSG:{}'.format(epsg_s1), xRes=pix_size_clc,
+                          yRes=pix_size_clc, outputType=gdal.GDT_Int16, outputBounds=[minx, miny, maxx, maxy])
 
-    out_clc = clc_file[:-4] + str("_reprojected.tif")
-    write_file_gdal(clc_res, out_clc)
-    print(f'reprojected clc file from EPSG {epsg_clc} to EPSG {epsg_s1} \n'
-          f'output file: {out_clc}\n')
+    out_ref_p = ref_p_file[:-4] + str("_reprojected.tif")
+    write_file_gdal(ref_p_res, out_ref_p)
+    print(f'reprojected ref_p file from EPSG {epsg_ref_p} to EPSG {epsg_s1} \n'
+          f'output file: {out_ref_p}\n')
 
     for i, raster in enumerate(raster_file_list):
         s1 = gdal.Open(raster_file_list[i])
 
-        gt_clc = clc.GetGeoTransform()
-        psize_clc = gt_clc[1]
+        gt_ref_p = ref_p.GetGeoTransform()
+        psize_clc = gt_ref_p[1]
 
         gt = s1.GetGeoTransform()
         minx = gt[0]
@@ -214,12 +214,13 @@ def reproject(path, ref_p_reclass, raster_file_list, raster_file_name):
         if not os.path.isdir(out_folder):   # create directory for resampled Sentinel scenes
             os.makedirs(out_folder)
 
-        file_name = raster_file_name[i][:-4] + str("_resamp_100m.tif")
-        out_file = os.path.join(out_folder, file_name)   # out_folder + file_name
+        file_name = raster_file_name[i] + str("_resampled.tif")
+        file_check = os.path.join(out_folder, file_name)
+        if not os.path.isfile(file_check):
+            out_file = os.path.join(out_folder, file_name)   # out_folder + file_name
+            write_file_gdal(s1_res, out_file)
 
-        write_file_gdal(s1_res, out_file)
-
-        print(f'resampled {i+1} scenes from {pix_size_s1}m to {psize_clc}m')
+            print(f'resampled {i+1} scenes from {pix_size_s1}m to {psize_clc}m')
 
 
 def array_to_gtiff(pred):
