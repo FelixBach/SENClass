@@ -99,13 +99,13 @@ def write_file_gdal(gdal_file, out_file):
     return
 
 
-def reclass_clc(path_clc, clc_name):
+def reclass_clc(path_ref_p, clc_name):
     """
     The CLC values are divided into five new classes.
 
     Parameters
     ----------
-    path_clc: string
+    path_ref_p: string
         Path clc file (tif-format)
     clc_name: string
         Specific file name
@@ -114,7 +114,7 @@ def reclass_clc(path_clc, clc_name):
     Returns
     -------
     """
-    clc_file = os.path.join(path_clc, clc_name)
+    clc_file = os.path.join(path_ref_p, clc_name)
 
     with rio.open(clc_file) as src:
         clc_band_1 = src.read(1)
@@ -131,16 +131,16 @@ def reclass_clc(path_clc, clc_name):
     ras_meta.update(count=1,
                     dtype=rio.uint16)
 
-    clc_recl_out = os.path.join(path_clc, str(clc_name[:-4] + "_reclass.tif"))
+    clc_recl_out = os.path.join(path_ref_p, str(clc_name[:-4] + "_reclass.tif"))
     if not os.path.isfile(clc_recl_out):
-        with rio.open(path_clc + clc_name[:-4] + str("_reclass.tif"), 'w', **ras_meta) as dst:
+        with rio.open(path_ref_p + clc_name[:-4] + str("_reclass.tif"), 'w', **ras_meta) as dst:
             dst.write(clc_array, 1)
 
     print(f'reclassified clc data output file: {clc_recl_out} \n')
     return clc_recl_out
 
 
-def reproject(path, clc_reclass, raster_file_list, raster_file_name):
+def reproject(path, ref_p_reclass, raster_file_list, raster_file_name):
     """
     If the Sentinel-1 Data and CLC-Data have a different extent, pixel size and epsg, the function will perform a
     reprojection of CLC-data and a downsampling of the S1-Data.
@@ -154,7 +154,7 @@ def reproject(path, clc_reclass, raster_file_list, raster_file_name):
     ----------
     path: string
         Path to folder with files
-    clc_reclass: string
+    ref_p_reclass: string
         Path to the clc file (tif-format)
     raster_file_list: list
         list with paths to Sentinel scenes
@@ -165,7 +165,7 @@ def reproject(path, clc_reclass, raster_file_list, raster_file_name):
     Returns
     -------
     """
-    clc_file = clc_reclass
+    clc_file = ref_p_reclass
     clc = gdal.Open(clc_file)
     s1 = gdal.Open(raster_file_list[0])
 
@@ -220,3 +220,20 @@ def reproject(path, clc_reclass, raster_file_list, raster_file_name):
         write_file_gdal(s1_res, out_file)
 
         print(f'resampled {i+1} scenes from {pix_size_s1}m to {psize_clc}m')
+
+
+def array_to_gtiff(pred):
+    """
+    The function writes a numpy array to a GTIFF tile
+    Parameters
+    ----------
+    Examples
+    --------
+    Returns
+    -------
+    """
+    driver = gdal.GetDriverByName("GTIFF")
+    rows = pred.shape
+    print(rows)
+
+    return

@@ -11,7 +11,7 @@ import os
 # so far only working for one image
 
 
-def select_samples(path_clc, path, file_name):
+def select_samples(path_ref_p, path, file_name):
     """
     The function select samples for training and testing
     ----------
@@ -31,7 +31,7 @@ def select_samples(path_clc, path, file_name):
     resamp_path = os.path.join(path + resamp)
     file = geodata.open_raster_gdal(resamp_path, file_name)  # open s1 scene
 
-    clc_file = geodata.open_raster_gdal(path=path_clc, file_name="CLC_subset_reclass_reprojected.tif")  # open clc data
+    clc_file = geodata.open_raster_gdal(path=path_ref_p, file_name="seasonality_10W_40Nv1_3_2020_sub.tif")  # open clc data
 
     file = np.array(file.GetRasterBand(1).ReadAsArray())  # read s1 as np.array
     mask = np.array(clc_file.GetRasterBand(1).ReadAsArray())  # read s1 as np.array
@@ -59,7 +59,7 @@ def select_samples(path_clc, path, file_name):
     # now split into training and test data
 
     df_size = len(df2)
-    test_size = int(0.1 * df_size)  # value of 0.1 gives results around 0.6
+    test_size = int(0.5 * df_size)  # value of 0.1 gives results around 0.6
     training_size = df_size - test_size
 
     print(f'\n'
