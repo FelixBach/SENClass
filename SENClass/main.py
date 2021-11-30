@@ -4,22 +4,26 @@ import sample_selection
 import random_forrrest
 import numpy as np
 import os
+import AccuracyAssessment
+import matplotlib.pyplot as plt
 
 start_time = datetime.now()
 
 
 def main():
-    path = "C:/GEO419/Spain_Donana_S1-VV/"
+    path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
+    #path = "C:/GEO419/Spain_Donana_S1-VV/"
     # path = "/home/felix/PycharmProjects/SENClass/test_data/s1/S1_resamp/"
     # path_ref_p = "/home/felix/PycharmProjects/SENClass/test_data/clc/"
 
     raster_ext = "tif"
 
     # path = "C:/GEO419/Spain_Donana_S1-VV/test_data/"    # path to satellite data
-    path_ref_p = "C:/GEO419/"  # path to reference product
+    path_ref_p = "D:/Uni/GEO419/T2/Abschlussaufgabe/"  # path to reference product
+    #path_ref_p = "C:/GEO419/"  # path to reference product
 
     file_name = "S1A__IW___A_20180620T182625_147_VV_grd_mli_norm_geo_db_resampled.tif"
-    ref_p_name = "seasonality_10W_40Nv1_3_2020_sub.tif"
+    ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected.tif"
     ref_p_name = os.path.join(path_ref_p, ref_p_name)
     # do stuff with geodata
     raster_file_list, raster_file_name = geodata.parse_folder(path, raster_ext)
@@ -35,10 +39,14 @@ def main():
     rfcb = random_forrrest.rf_classifier_basic(max_depth=5, n_estimator=5)  # train rf
     rfcb_fit = random_forrrest.rf_classifier_fit(rfcb, x_train, y_train)    # fit model
     pred = random_forrrest.rf_calssifier_predict(rfcb_fit, x_test)  # get result
-
     random_forrrest.accu(pred, y_test)  # get overall accuracy
+    confusion_matrix = AccuracyAssessment.get_confusion_matrix(y_test, pred) #get confusion matrix
+    AccuracyAssessment.plot_confusion_matrix(confusion_matrix) #heatmap of Confusion Matrix
+    AccuracyAssessment.get_kappa(confusion_matrix) #get Cappa Coefficient
+
 
     geodata.array_to_gtiff(pred)
+    plt.show()
 
     end_time = datetime.now()
     print(f"\n end-time =", end_time - start_time, "Hr:min:sec \n")
