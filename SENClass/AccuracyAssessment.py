@@ -6,8 +6,9 @@ AccuracyAssessment.py: contains functions to assess the accuracy of the RF class
 
 """
 
-import seaborn as sns
 import numpy as np
+import seaborn as sns
+from sklearn import metrics as metrics
 from sklearn.metrics import confusion_matrix
 from statsmodels.stats.inter_rater import cohens_kappa
 
@@ -31,6 +32,7 @@ def get_confusion_matrix(y_test, y_pred):
     cf_matrix = confusion_matrix(y_test, y_pred)
     return cf_matrix
 
+
 def plot_confusion_matrix(cf_matrix):
     """
     The function visualizes the confusion matrix as heatmap from seaborn package
@@ -43,9 +45,10 @@ def plot_confusion_matrix(cf_matrix):
     cf_heatmap: matplotlib.axes._subplots.AxesSubplot
         cf_heatmap plot with confusion matrix
     """
-    cf_heatmap = sns.heatmap(cf_matrix/np.sum(cf_matrix), annot=True,
-            fmt='.2%', cmap='Blues')
+    cf_heatmap = sns.heatmap(cf_matrix / np.sum(cf_matrix), annot=True,
+                             fmt='.2%', cmap='Blues')
     return cf_heatmap
+
 
 def get_kappa(cf_matrix):
     """
@@ -62,3 +65,22 @@ def get_kappa(cf_matrix):
     kappa = cohens_kappa(cf_matrix).kappa
     res_kappa = f'Kappa Coefficient is {kappa}'
     return print(res_kappa)
+
+
+def accuracy(pred, y_test):
+    """
+    The function calculates the overall accuracy
+    ----------
+    pred: array
+        array with the predicted labels
+    y_test: array
+        array with the values from the reclassified clc mask
+    Examples
+    --------
+    Returns
+    -------
+    """
+    acc = metrics.accuracy_score(y_test, pred)
+    res = f'Overall accuracy is {acc}'
+
+    return print(res)

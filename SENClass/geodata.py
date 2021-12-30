@@ -3,12 +3,12 @@ geodata.py: contains functions to process the geodata
 @author: Felix Bachmann
 """
 
-import rasterio as rio
 import os
-import numpy as np
+import osr
 import glob
 import gdal
-import osr
+import numpy as np
+import rasterio as rio
 
 
 def parse_folder(path, raster_ext):
@@ -37,7 +37,7 @@ def parse_folder(path, raster_ext):
         raster_file_name = [w[len(path):-(len(raster_ext) + 1)] for w in raster_file_list]
 
     # print(raster_file_list)
-    print(f'folder contains {len(raster_file_list)} raster files \n')
+    # print(f'folder contains {len(raster_file_list)} raster files \n')
 
     return raster_file_list, raster_file_name
 
@@ -140,7 +140,7 @@ def reclass_clc(path_ref_p, clc_name):
     return clc_recl_out
 
 
-def reproject(path, ref_p_name, raster_file_list, raster_file_name):
+def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_scenes):
     """
     If the Sentinel-1 Data and CLC-Data have a different extent, pixel size and epsg, the function will perform a
     reprojection of reference product and a downsampling of the S1-Data.
@@ -149,23 +149,25 @@ def reproject(path, ref_p_name, raster_file_list, raster_file_name):
     at gdal.Wrap. Afterwards all sentinel scenes are adjusted. Since the CLC file got the coordinate system of the
     sentinel scenes, the geometric resolution is adapted to that of the CLC data. For this purpose, the pixel size is
     read from the CLC data and inserted into gdal.wrap accordingly.
-
     Parameters
     ----------
     path: string
-        Path to folder with files
-    ref_p_name: string
+        Path to folder with satellite files
+    path_ref_p: string
         Path to the ref_p file (tif-format)
-    raster_file_list: list
-        list with paths to Sentinel scenes
-    raster_file_name: list
-        name from each file in the raster_file_list
-    Examples
-    --------
+    ref_p_name: list
+        list with paths to satellite files
+    raster_ext: string
+        extension from raster files
+    out_folder_resampled_scenes: string
+        path for the output folder with the resampled scenes
     Returns
     -------
+
     """
-    ref_p_file = ref_p_name
+    raster_file_list, raster_file_name = parse_folder(path, raster_ext)
+    print(f'folder contains {len(raster_file_list)} raster files \n')
+    ref_p_file = os.path.join(path_ref_p, ref_p_name)
     ref_p = gdal.Open(ref_p_file)
     s1 = gdal.Open(raster_file_list[0])
 
@@ -208,7 +210,7 @@ def reproject(path, ref_p_name, raster_file_list, raster_file_name):
         s1_res = gdal.Warp('', s1, format='VRT', xRes=psize_clc, yRes=psize_clc,
                            outputType=gdal.GDT_Float32, outputBounds=[minx, miny, maxx, maxy])
 
-        out_folder = "S1_resamp"
+        out_folder = out_folder_resampled_scenes
         out_folder = os.path.join(path, out_folder)
 
         if not os.path.isdir(out_folder):   # create directory for resampled Sentinel scenes
