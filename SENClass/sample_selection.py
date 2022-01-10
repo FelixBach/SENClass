@@ -4,11 +4,41 @@ sample_selection.py: contains functions to process the geodata
 """
 
 import os
+import glob
 import gdal
 import geodata
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+
+
+def sampler(nanmask, nsamples, seed):
+    """
+    central function to select random samples from arrays.
+
+    Parameters
+    ----------
+    nanmask: numpy.ndarray
+        a mask to limit the sample selection
+    nsamples: int
+        the number of samples to select
+    seed: int
+        seed used to initialize the pseudo-random number generator
+    Returns
+    -------
+    numpy.ndarray
+        the generated random samples
+
+    See Also
+    --------
+    numpy.random.seed
+    numpy.random.choice
+    """
+    indices = np.where(nanmask.flatten())[0]
+    samplesize = min(indices.size, nsamples) if nsamples is not None else indices.size
+    np.random.seed(seed)
+    sample_ids = np.random.choice(a=indices, size=samplesize, replace=False)
+    return sample_ids
 
 
 def select_samples(path_ref_p, ref_p_name, path, out_folder_resampled_scenes, raster_ext, train_size, random_state,
@@ -66,8 +96,11 @@ def select_samples(path_ref_p, ref_p_name, path, out_folder_resampled_scenes, ra
         layer = pd.Series(np.array(file).flat)
         df['file_{}'.format(i)] = layer
 
+    print(df.shape)
     df2 = df[df != -99]  # remove all -99 values from data frame
     df2 = df2.dropna()  # remove all NaN values from data frame
+    # df2 = df
+    print(df2.shape)
 
     print(f"Removing -99 and NaN-values from data frame")
 
@@ -79,7 +112,7 @@ def select_samples(path_ref_p, ref_p_name, path, out_folder_resampled_scenes, ra
 
         x_train, x_test, y_train, y_test = train_test_split(df_x, df_y, train_size=train_size, random_state=random_state
                                                             , stratify=df_y)
-
+        print(x_train)
         print(f"{len(x_train)} pixels used for training and {len(x_test)} pixels used for testing \n")
 
     else:
@@ -88,8 +121,227 @@ def select_samples(path_ref_p, ref_p_name, path, out_folder_resampled_scenes, ra
 
         x = df2.iloc[:, 1:row_count].values
         y = df2.iloc[:, 0].values
+        print(type(x))
         x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=train_size, random_state=random_state)
 
+        print(x_train)
         print(f"{len(x_train)} pixels used for training and {len(x_test)} pixels used for testing \n")
 
     return x_train, x_test, y_train, y_test
+
+
+def stratified_random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_state, fraction_size, train_size,
+                               max_size, min_size):
+    raster_file_list = []
+    raster_file_name = []
+    for file in glob.glob(path + "*" + raster_ext):
+        raster_file_list.append(file)
+        raster_file_list = [w.replace('\\', '/') for w in raster_file_list]
+        raster_file_name = [w[len(path):1000] for w in raster_file_list]
+
+    len_ras_li = len(raster_file_list)
+    print(f'length of raster file list is {len_ras_li}')
+
+    ref_p = geodata.open_raster_gdal(path_ref_p, ref_p_name)
+    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+
+    file = geodata.open_raster_gdal(path, raster_file_name[0])
+    file = np.array(file.GetRasterBand(1).ReadAsArray())
+
+    i = 1  # 58 is faster for testing; normaly 1
+    while i <= len_ras_li:
+        test = geodata.open_raster_gdal(path, raster_file_name[i])
+        test = np.array(test.GetRasterBand(1).ReadAsArray())
+        file = np.append(file, test)
+
+        ref_app = geodata.open_raster_gdal(path_ref_p, ref_p_name)
+        ref_app = np.array(ref_app.GetRasterBand(1).ReadAsArray())
+        ref_p = np.append(ref_p, ref_app)
+
+        i += 1
+        if i == len_ras_li:
+            break
+        else:
+            print(f'reading file {i}')
+            continue
+
+    print(f'reading unfiltered arrays')
+    # print(len(file), len(ref_p))
+
+    index_val = np.where(file == -99)  # get index value from -99 values
+    ref_p = np.delete(ref_p, index_val)  # delete values from array where index_val == -99
+    file = np.delete(file, index_val)  # delete values from array where index_val == -99
+
+    print(f'creating filtered arrays \n')
+    # print(len(file), len(ref_p))
+
+    ref_p = np.asarray(ref_p)
+    file = np.asarray(file)
+
+    mask = ref_p
+
+    mask_unique = np.unique(mask)
+    mask_unique_val = np.unique(mask, return_counts=True)
+    min_ax1 = np.amin(mask_unique_val, axis=1).astype(int)
+    min_ax1 = min_ax1[1]
+    print(f'unique values {mask_unique}')
+    print(f'count of unique values {mask_unique_val[1]}')
+    mask_unique_val = np.asarray(mask_unique_val[1])
+
+    x_list = []
+    y_list = []
+    for j, mask_val in enumerate(mask_unique):
+        nanmask = (mask == mask_unique[j])
+
+        nsamples = mask_unique_val[j] * fraction_size
+        nsamples = round(nsamples)
+        nsamples = np.int(nsamples)
+        # print(f'{mask_unique[j]} mask value')
+        print(f'{nsamples} calulated nsamples')
+        if nsamples > max_size:
+            nsamples = max_size
+            print(f'{max_size} used max_size')
+        elif nsamples < max_size:
+            if nsamples < min_size:
+                if min_size < min_ax1:
+                    nsamples = min_size
+                    print(f'{min_size} used min_size')
+                else:
+                    nsamples = min_ax1
+                    print(f'{min_ax1} used min_ax1')
+            else:
+                nsamples = nsamples
+                print(f'{nsamples} used n_samples')
+
+        # print(f'selecting {nsamples} samples from class {int(mask_unique[j])}')
+
+        seed = random_state
+        sample_ids = sampler(nanmask, nsamples, seed)
+
+        x = file.flatten()[sample_ids]
+        y = mask.flatten()[sample_ids]
+
+        x_list.append(x)
+        y_list.append(y)
+
+    flat_list_x = []
+    for sublist in x_list:
+        for item in sublist:
+            flat_list_x.append(item)
+
+    flat_list_y = []
+    for sublist in y_list:
+        for item in sublist:
+            flat_list_y.append(item)
+
+    print("\n")
+
+    df = pd.DataFrame(list(zip(flat_list_x, flat_list_y)),
+                      columns=['x_val', 'y_val'])
+
+    x = df.iloc[:, 0].values
+    y = df.iloc[:, 1].values
+    x = x.reshape(-1, 1)
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=train_size, random_state=random_state)
+
+    return x_train, x_test, y_train, y_test
+
+
+def random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_state, train_size, n_samples):
+    raster_file_list = []
+    raster_file_name = []
+    for file in glob.glob(path + "*" + raster_ext):
+        raster_file_list.append(file)
+        raster_file_list = [w.replace('\\', '/') for w in raster_file_list]
+        raster_file_name = [w[len(path):1000] for w in raster_file_list]
+
+    len_ras_li = len(raster_file_list)
+    print(f'length of raster file list is {len_ras_li}')
+
+    ref_p = geodata.open_raster_gdal(path_ref_p, ref_p_name)
+    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+
+    file = geodata.open_raster_gdal(path, raster_file_name[0])
+    file = np.array(file.GetRasterBand(1).ReadAsArray())
+
+    i = 1  # 58 is faster for testing; normaly 1
+    while i <= len_ras_li:
+        test = geodata.open_raster_gdal(path, raster_file_name[i])
+        test = np.array(test.GetRasterBand(1).ReadAsArray())
+        file = np.append(file, test)
+
+        ref_app = geodata.open_raster_gdal(path_ref_p, ref_p_name)
+        ref_app = np.array(ref_app.GetRasterBand(1).ReadAsArray())
+        ref_p = np.append(ref_p, ref_app)
+
+        i += 1
+        if i == len_ras_li:
+            break
+        else:
+            print(f'reading file {i}')
+            continue
+
+    print(f'unfiltered arrays')
+    print(len(file), len(ref_p))
+
+    index_val = np.where(file == -99)  # get index value from -99 values
+    ref_p = np.delete(ref_p, index_val)  # delete values from array where index_val == -99
+    file = np.delete(file, index_val)  # delete values from array where index_val == -99
+
+    print(f'filtered arrays')
+    print(len(file), len(ref_p))
+
+    mask = ref_p
+
+    mask_unique = np.unique(mask)
+    mask_unique_val = np.unique(mask, return_counts=True)
+    min_ax1 = np.amin(mask_unique_val, axis=1).astype(int)
+    print(f'unique values in reference product {mask_unique}')
+    print(f'count of unique values in reference product {mask_unique_val[1]}')
+    mask_unique_val = np.asarray(mask_unique_val[1])
+
+    small_class = np.where(mask_unique_val == min(mask_unique_val))
+
+    if n_samples > min_ax1[1]:
+        nsamples = min_ax1[1]
+        print(f'\n The specified sample size {n_samples} is chosen too large, because in class {small_class[0]} only \n'
+              f'{min_ax1[1]} values are available and is smaller than the specified sample size ({n_samples}). \n'
+              f'The sample size is thus reduced to the value {min_ax1[1]} of class {small_class[0]}.')
+        print(f'collecting {nsamples} samples per class and overall {nsamples * len(mask_unique)} samples \n')
+    else:
+        nsamples = n_samples
+        print(f'\n collecting {nsamples} samples per class and overall {nsamples * len(mask_unique)} samples \n')
+
+    seed = random_state
+
+    x_list = []
+    y_list = []
+    for j, mask_val in enumerate(mask_unique):
+        nanmask = (mask == mask_unique[j])
+
+        sample_ids = sampler(nanmask, nsamples, seed)
+
+        x = file.flatten()[sample_ids]
+        y = mask.flatten()[sample_ids]
+
+        x_list.append(x)
+        y_list.append(y)
+
+    x_list = np.asarray(x_list).flatten()
+    y_list = np.asarray(y_list).flatten()
+
+    df = pd.DataFrame(list(zip(x_list, y_list)),
+                      columns=['x_val', 'y_val'])
+
+    x = df.iloc[:, 0].values
+    y = df.iloc[:, 1].values
+    x = x.reshape(-1, 1)
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=train_size, random_state=random_state)
+
+    return x_train, x_test, y_train, y_test
+
+
+def calculate_samples():
+    return
