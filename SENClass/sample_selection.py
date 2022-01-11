@@ -1,10 +1,9 @@
 """
-sample_selection.py: contains functions to process the geodata
+sample_selection.py: contains functions select training and test samples
 @author: Felix Bachmann
 """
 
 import os
-import glob
 import gdal
 import geodata
 import numpy as np
@@ -41,7 +40,7 @@ def sampler(nanmask, nsamples, seed):
     return sample_ids
 
 
-def select_samples(path_ref_p, ref_p_name, path, out_folder_resampled_scenes, raster_ext, train_size, random_state,
+def select_samples(path, path_ref_p, ref_p_name, out_folder_resampled_scenes, raster_ext, train_size, random_state,
                    strat):
     """
     The function select samples for training and testing. The user has the choice between two methods to select the
@@ -96,11 +95,10 @@ def select_samples(path_ref_p, ref_p_name, path, out_folder_resampled_scenes, ra
         layer = pd.Series(np.array(file).flat)
         df['file_{}'.format(i)] = layer
 
-    print(df.shape)
+    # print(df.shape)
     df2 = df[df != -99]  # remove all -99 values from data frame
     df2 = df2.dropna()  # remove all NaN values from data frame
-    # df2 = df
-    print(df2.shape)
+    # print(df2.shape)
 
     print(f"Removing -99 and NaN-values from data frame")
 
@@ -112,7 +110,6 @@ def select_samples(path_ref_p, ref_p_name, path, out_folder_resampled_scenes, ra
 
         x_train, x_test, y_train, y_test = train_test_split(df_x, df_y, train_size=train_size, random_state=random_state
                                                             , stratify=df_y)
-        print(x_train)
         print(f"{len(x_train)} pixels used for training and {len(x_test)} pixels used for testing \n")
 
     else:
@@ -121,34 +118,57 @@ def select_samples(path_ref_p, ref_p_name, path, out_folder_resampled_scenes, ra
 
         x = df2.iloc[:, 1:row_count].values
         y = df2.iloc[:, 0].values
-        print(type(x))
         x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=train_size, random_state=random_state)
 
-        print(x_train)
         print(f"{len(x_train)} pixels used for training and {len(x_test)} pixels used for testing \n")
 
     return x_train, x_test, y_train, y_test
 
 
-def stratified_random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_state, fraction_size, train_size,
-                               max_size, min_size):
-    raster_file_list = []
-    raster_file_name = []
-    for file in glob.glob(path + "*" + raster_ext):
-        raster_file_list.append(file)
-        raster_file_list = [w.replace('\\', '/') for w in raster_file_list]
-        raster_file_name = [w[len(path):1000] for w in raster_file_list]
+def stratified_random_sampling(path, path_ref_p, out_folder_resampled_scenes, ref_p_name, raster_ext, random_state,
+                               fraction_size, train_size, max_size, min_size):
+    """
 
+    Parameters
+    ----------
+    path: string
+        Path to satellite images
+    path_ref_p: string
+        Path to reference file (mask file)
+    out_folder_resampled_scenes: string
+        Path to resampled satellite images
+    ref_p_name: string
+        Name of reference file
+    raster_ext: string
+        Extension from raster files
+    random_state: int
+        Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
+        multiple executions.
+    fraction_size: float
+
+    train_size: float
+        Size of the training split
+    max_size: int
+        Maximum number of samples to be drawn
+    min_size: int
+        Minimum number of samples to be drawn
+
+    Returns
+    -------
+
+    """
+    res_path = os.path.join(path, out_folder_resampled_scenes)
+    raster_file_list, raster_file_name = geodata.parse_folder(res_path, raster_ext)
     len_ras_li = len(raster_file_list)
-    print(f'length of raster file list is {len_ras_li}')
 
     ref_p = geodata.open_raster_gdal(path_ref_p, ref_p_name)
     ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
 
-    file = geodata.open_raster_gdal(path, raster_file_name[0])
+    file = geodata.open_raster_gdal(res_path, raster_file_name[0])
     file = np.array(file.GetRasterBand(1).ReadAsArray())
 
     i = 1  # 58 is faster for testing; normaly 1
+    print(f'Reading {len_ras_li} raster files...')
     while i <= len_ras_li:
         test = geodata.open_raster_gdal(path, raster_file_name[i])
         test = np.array(test.GetRasterBand(1).ReadAsArray())
@@ -162,18 +182,16 @@ def stratified_random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_
         if i == len_ras_li:
             break
         else:
-            print(f'reading file {i}')
+            # print(f'reading file {i}')
             continue
 
-    print(f'reading unfiltered arrays')
-    # print(len(file), len(ref_p))
+    print(f'Creating arrays for pixel values and label values.')
 
     index_val = np.where(file == -99)  # get index value from -99 values
     ref_p = np.delete(ref_p, index_val)  # delete values from array where index_val == -99
     file = np.delete(file, index_val)  # delete values from array where index_val == -99
 
-    print(f'creating filtered arrays \n')
-    # print(len(file), len(ref_p))
+    print(f'Creating filtered arrays \n')
 
     ref_p = np.asarray(ref_p)
     file = np.asarray(file)
@@ -190,30 +208,35 @@ def stratified_random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_
 
     x_list = []
     y_list = []
+    sampel_sum = 0
+    print(f'calculating samples per class')
     for j, mask_val in enumerate(mask_unique):
         nanmask = (mask == mask_unique[j])
-
-        nsamples = mask_unique_val[j] * fraction_size
-        nsamples = round(nsamples)
-        nsamples = np.int(nsamples)
-        # print(f'{mask_unique[j]} mask value')
-        print(f'{nsamples} calulated nsamples')
+        nsamples = np.int(round(mask_unique_val[j] * fraction_size))
+        print(f'\n Selecting samples from class {int(mask_unique[j])}')
         if nsamples > max_size:
+            print(f'Using the fraction_size ({fraction_size}), {nsamples} samples would have to be drawn from the '
+                  f'class. The calculated value is higher than the max_size limit. Therefore, only {max_size} samples '
+                  f'are drawn for the class.')
             nsamples = max_size
-            print(f'{max_size} used max_size')
         elif nsamples < max_size:
             if nsamples < min_size:
-                if min_size < min_ax1:
+                if min_size < mask_unique_val[j]:
+                    print(f'Using the fraction_size ({fraction_size}), {nsamples} samples would have to be drawn from '
+                          f'the class and the class contains {mask_unique_val[j]} values. Since the calculated value is'
+                          f' less than the min_size value ({min_size}), {min_size} samples are drawn from the class')
                     nsamples = min_size
-                    print(f'{min_size} used min_size')
                 else:
-                    nsamples = min_ax1
-                    print(f'{min_ax1} used min_ax1')
+                    print(f'The calculated number of samples to be drawn ({nsamples}) is less than the min_size value '
+                          f'{min_size}. 90% of the available pixels in the class are used as samples. This will '
+                          f'draw {np.int(round(mask_unique_val[j] * 0.9))} samples from {mask_unique_val[j]} values '
+                          f'in the class')
+                    nsamples = np.int(round(mask_unique_val[j] * 0.9))
             else:
+                print(f'{nsamples} were calculated for the class and are drawn.')
                 nsamples = nsamples
-                print(f'{nsamples} used n_samples')
 
-        # print(f'selecting {nsamples} samples from class {int(mask_unique[j])}')
+        sampel_sum = sampel_sum + nsamples
 
         seed = random_state
         sample_ids = sampler(nanmask, nsamples, seed)
@@ -224,6 +247,8 @@ def stratified_random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_
         x_list.append(x)
         y_list.append(y)
 
+    print(f'\n In total {sampel_sum} samples were selected.')
+
     flat_list_x = []
     for sublist in x_list:
         for item in sublist:
@@ -233,8 +258,6 @@ def stratified_random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_
     for sublist in y_list:
         for item in sublist:
             flat_list_y.append(item)
-
-    print("\n")
 
     df = pd.DataFrame(list(zip(flat_list_x, flat_list_y)),
                       columns=['x_val', 'y_val'])
@@ -248,26 +271,48 @@ def stratified_random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_
     return x_train, x_test, y_train, y_test
 
 
-def random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_state, train_size, n_samples):
-    raster_file_list = []
-    raster_file_name = []
-    for file in glob.glob(path + "*" + raster_ext):
-        raster_file_list.append(file)
-        raster_file_list = [w.replace('\\', '/') for w in raster_file_list]
-        raster_file_name = [w[len(path):1000] for w in raster_file_list]
+def random_sampling(path, path_ref_p, out_folder_resampled_scenes, ref_p_name, raster_ext,
+                    random_state, train_size, n_samples):
+    """
 
+    Parameters
+    ----------
+    path: string
+        Path to satellite images
+    path_ref_p: string
+        Path to reference file (mask file)
+    out_folder_resampled_scenes: string
+        Path to resampled satellite images
+    ref_p_name: string
+        Name of reference file
+    raster_ext: string
+        Extension from raster files
+    random_state: int
+        Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
+        multiple executions.
+    train_size: float
+        Size of the training split
+    n_samples: int
+        Number of samples to be drawn per class
+
+    Returns
+    -------
+
+    """
+    res_path = os.path.join(path, out_folder_resampled_scenes)
+    raster_file_list, raster_file_name = geodata.parse_folder(res_path, raster_ext)
     len_ras_li = len(raster_file_list)
-    print(f'length of raster file list is {len_ras_li}')
 
     ref_p = geodata.open_raster_gdal(path_ref_p, ref_p_name)
     ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
 
-    file = geodata.open_raster_gdal(path, raster_file_name[0])
+    file = geodata.open_raster_gdal(res_path, raster_file_name[0])
     file = np.array(file.GetRasterBand(1).ReadAsArray())
 
-    i = 1  # 58 is faster for testing; normaly 1
+    i = 55 # 58 is faster for testing; normaly 1
+    print(f'Reading {len_ras_li} raster files...')
     while i <= len_ras_li:
-        test = geodata.open_raster_gdal(path, raster_file_name[i])
+        test = geodata.open_raster_gdal(res_path, raster_file_name[i])
         test = np.array(test.GetRasterBand(1).ReadAsArray())
         file = np.append(file, test)
 
@@ -279,47 +324,44 @@ def random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_state, trai
         if i == len_ras_li:
             break
         else:
-            print(f'reading file {i}')
+            # print(f'reading file {i}')
             continue
 
-    print(f'unfiltered arrays')
-    print(len(file), len(ref_p))
+    print(f'Creating arrays for pixel values and label values.')
 
     index_val = np.where(file == -99)  # get index value from -99 values
     ref_p = np.delete(ref_p, index_val)  # delete values from array where index_val == -99
     file = np.delete(file, index_val)  # delete values from array where index_val == -99
 
-    print(f'filtered arrays')
-    print(len(file), len(ref_p))
+    print(f'Creating filtered arrays \n')
 
     mask = ref_p
 
     mask_unique = np.unique(mask)
     mask_unique_val = np.unique(mask, return_counts=True)
-    min_ax1 = np.amin(mask_unique_val, axis=1).astype(int)
     print(f'unique values in reference product {mask_unique}')
-    print(f'count of unique values in reference product {mask_unique_val[1]}')
+    print(f'count of unique values in reference product {mask_unique_val[1]} \n')
     mask_unique_val = np.asarray(mask_unique_val[1])
-
-    small_class = np.where(mask_unique_val == min(mask_unique_val))
-
-    if n_samples > min_ax1[1]:
-        nsamples = min_ax1[1]
-        print(f'\n The specified sample size {n_samples} is chosen too large, because in class {small_class[0]} only \n'
-              f'{min_ax1[1]} values are available and is smaller than the specified sample size ({n_samples}). \n'
-              f'The sample size is thus reduced to the value {min_ax1[1]} of class {small_class[0]}.')
-        print(f'collecting {nsamples} samples per class and overall {nsamples * len(mask_unique)} samples \n')
-    else:
-        nsamples = n_samples
-        print(f'\n collecting {nsamples} samples per class and overall {nsamples * len(mask_unique)} samples \n')
-
-    seed = random_state
 
     x_list = []
     y_list = []
+    sampel_sum = 0
     for j, mask_val in enumerate(mask_unique):
         nanmask = (mask == mask_unique[j])
 
+        if n_samples > mask_unique_val[j]:
+            nsamples = np.int(round(mask_unique_val[j] * 0.9))
+            print(
+                f'The specified sample size {n_samples} is chosen too large, because in class {int(mask_unique[j])} \n'
+                f'only {mask_unique_val[j]} values are available and is smaller than the specified sample size \n'
+                f'({n_samples}). 90% of the available pixels in the class are used as samples. This will draw \n'
+                f'{np.int(round(mask_unique_val[j] * 0.9))} samples from {mask_unique_val[j]} values in the class. \n')
+        else:
+            nsamples = n_samples
+
+        sampel_sum = sampel_sum + nsamples
+
+        seed = random_state
         sample_ids = sampler(nanmask, nsamples, seed)
 
         x = file.flatten()[sample_ids]
@@ -331,7 +373,17 @@ def random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_state, trai
     x_list = np.asarray(x_list).flatten()
     y_list = np.asarray(y_list).flatten()
 
-    df = pd.DataFrame(list(zip(x_list, y_list)),
+    flat_list_x = []
+    for sublist in x_list:
+        for item in sublist:
+            flat_list_x.append(item)
+
+    flat_list_y = []
+    for sublist in y_list:
+        for item in sublist:
+            flat_list_y.append(item)
+
+    df = pd.DataFrame(list(zip(flat_list_x, flat_list_y)),
                       columns=['x_val', 'y_val'])
 
     x = df.iloc[:, 0].values
@@ -341,7 +393,3 @@ def random_sampling(path, path_ref_p, ref_p_name, raster_ext, random_state, trai
     x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=train_size, random_state=random_state)
 
     return x_train, x_test, y_train, y_test
-
-
-def calculate_samples():
-    return

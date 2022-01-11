@@ -34,10 +34,7 @@ def parse_folder(path, raster_ext):
     for file in glob.glob(path + "*" + raster_ext):
         raster_file_list.append(file)
         raster_file_list = [w.replace('\\', '/') for w in raster_file_list]
-        raster_file_name = [w[len(path):-(len(raster_ext) + 1)] for w in raster_file_list]
-
-    # print(raster_file_list)
-    # print(f'folder contains {len(raster_file_list)} raster files \n')
+        raster_file_name = [w[len(path):1000] for w in raster_file_list]
 
     return raster_file_list, raster_file_name
 
@@ -155,7 +152,7 @@ def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_sce
         Path to folder with satellite files
     path_ref_p: string
         Path to the ref_p file (tif-format)
-    ref_p_name: list
+    ref_p_name: string
         list with paths to satellite files
     raster_ext: string
         extension from raster files
@@ -167,6 +164,7 @@ def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_sce
     """
     raster_file_list, raster_file_name = parse_folder(path, raster_ext)
     print(f'folder contains {len(raster_file_list)} raster files \n')
+
     ref_p_file = os.path.join(path_ref_p, ref_p_name)
     ref_p = gdal.Open(ref_p_file)
     s1 = gdal.Open(raster_file_list[0])
