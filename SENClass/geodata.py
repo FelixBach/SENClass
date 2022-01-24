@@ -223,18 +223,46 @@ def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_sce
             print(f'resampled {i+1} scenes from {pix_size_s1}m to {psize_clc}m')
 
 
-def array_to_gtiff(pred):
+def prediction_to_gtiff(prediction, op_name, of_name, path_ref_p, ref_p_name, raster_ext):
     """
-    The function writes a numpy array to a GTIFF tile
+    The function writes a numpy array to a GTIFF file.
     Parameters
     ----------
-    Examples
-    --------
+    prediction
+    op_name
+    of_name
+    path_ref_p
+    ref_p_name
+    raster_ext
+
     Returns
     -------
+
     """
-    driver = gdal.GetDriverByName("GTIFF")
-    rows = pred.shape
-    print(rows)
+    # creates output file
+    of_name = of_name + "." + raster_ext
+    out_path = os.path.join(op_name, of_name)
+
+    # read meta information from reference product
+    ref_p = open_raster_gdal(path_ref_p, ref_p_name)
+    gt = ref_p.GetGeoTransform()
+    prj = ref_p.GetProjection()
+    srs = osr.SpatialReference(wkt=prj)
+    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+    cols, rows = ref_p.shape
+
+    # reshaping prediction and saving raster with meta information from reference product to disk
+    grid = prediction.reshape((cols, rows))
+    driver = gdal.GetDriverByName('GTIFF')
+    rows, cols = ref_p.shape
+    out_ds = driver.Create(out_path, cols, rows, 1, gdal.GDT_UInt16)
+    print(type(out_ds))
+    # writting output raster
+    out_ds.GetRasterBand(1).WriteArray(grid)
+    out_ds.SetGeoTransform(gt)
+    # setting spatial reference of output raster
+    out_ds.SetProjection(srs.ExportToWkt())
+    # Close output raster dataset
+    out_ds = None
 
     return

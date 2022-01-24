@@ -3,45 +3,65 @@ random_forest.py: In the script, the random forest is created, fited to the data
 @author: Felix Bachmann
 """
 
+import warnings
 from sklearn import ensemble as ensemble
-import numpy as np
-import matplotlib as plt
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from matplotlib.patches import Patch
-import matplotlib as mpl
+
+warnings.simplefilter("ignore", UserWarning)
 
 
-def random_forest_classifier(max_depth, n_estimator, random_state, x_train, x_test, y_train):
+def rf_fit(max_depth, random_state, n_estimators, n_cores, verbose, x_train, y_train):
     """
-    The function calls the RandomForrest algorithm from sklearn, builds the tree and calculates the prediction.
+    rf_fit will create the Random Forrest with the defined parameters and fit the model to the training data.
     Parameters
     ----------
-    max_depth: int
-        maximal depth of each tree
-    n_estimator: int
-        number of estimators
-    random_state: int
-        Returns a random number between 0 and 43 and ensures that the random forests are not identical in multiple
-        executions.
-    x_train: pandas DataFrame
-        DataFrame with training pixels from satellite images
-    x_test: pandas DataFrame
-        DataFrame with test pixels from satellite images
-    y_train: pandas DataFrame
-        DataFrame with training labels from reference product images
-    Examples
-    --------
+    max_depth
+    random_state
+    n_estimators
+    n_cores
+    verbose
+    x_train
+    y_train
+
     Returns
     -------
-    pred
-        array with predicted labels
+    sklearn.ensemble._forest.RandomForestClassifier
     """
-    print(f"Build random forest with {n_estimator} trees and a max depth of {max_depth}")
-    rfcb = ensemble.RandomForestClassifier(max_depth=max_depth, random_state=random_state, n_estimators=n_estimator)
-    print(f"Fitting random forest to training data")
-    rfcb.fit(x_train, y_train)
-    print(f"Predicting results")
-    pred = rfcb.predict(x_test)
+    rf = ensemble.RandomForestClassifier(max_depth=max_depth, random_state=random_state, n_estimators=n_estimators,
+                                         n_jobs=n_cores, verbose=verbose)
+    rf_fitted = rf.fit(x_train, y_train)
 
-    return pred
+    return rf, rf_fitted
+
+
+def rf_feature_importance(rf):
+    """
+
+    Parameters
+    ----------
+    rf
+
+    Returns
+    -------
+    numpy.ndarray
+    """
+    feature_importance = rf.feature_importances_
+
+    return feature_importance
+
+
+def rf_predict(data, rf_fitted):
+    """
+
+    Parameters
+    ----------
+    data
+    rf_fitted
+
+    Returns
+    -------
+    numpy.ndarray
+    """
+    data = data.iloc[:, 1:]
+    prediction = rf_fitted.predict(data)
+
+    return prediction

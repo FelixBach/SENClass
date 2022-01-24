@@ -95,6 +95,7 @@ def select_samples(path, path_ref_p, ref_p_name, out_folder_resampled_scenes, ra
         layer = pd.Series(np.array(file).flat)
         df['file_{}'.format(i)] = layer
 
+    data = df
     # print(df.shape)
     df2 = df[df != -99]  # remove all -99 values from data frame
     df2 = df2.dropna()  # remove all NaN values from data frame
@@ -122,7 +123,7 @@ def select_samples(path, path_ref_p, ref_p_name, out_folder_resampled_scenes, ra
 
         print(f"{len(x_train)} pixels used for training and {len(x_test)} pixels used for testing \n")
 
-    return x_train, x_test, y_train, y_test
+    return x_train, x_test, y_train, y_test, data
 
 
 def stratified_random_sampling(path, path_ref_p, out_folder_resampled_scenes, ref_p_name, raster_ext, random_state,
@@ -309,7 +310,7 @@ def random_sampling(path, path_ref_p, out_folder_resampled_scenes, ref_p_name, r
     file = geodata.open_raster_gdal(res_path, raster_file_name[0])
     file = np.array(file.GetRasterBand(1).ReadAsArray())
 
-    i = 55 # 58 is faster for testing; normaly 1
+    i = 58 # 58 is faster for testing; normaly 1
     print(f'Reading {len_ras_li} raster files...')
     while i <= len_ras_li:
         test = geodata.open_raster_gdal(res_path, raster_file_name[i])
