@@ -14,7 +14,7 @@ from statsmodels.stats.inter_rater import cohens_kappa
 
 
 # Function to create fancy confusion matrix
-def get_confusion_matrix(prediction, path_ref_p, ref_p_name):
+def get_confusion_matrix(prediction, out_ref_p):
     """
     The function calls the confusion_matrix from sklearn.metrics
     Parameters
@@ -28,8 +28,7 @@ def get_confusion_matrix(prediction, path_ref_p, ref_p_name):
     cf_matrix: numpy.ndarray
         array with confusion matrix
     """
-    ref_p_file = os.path.join(path_ref_p, ref_p_name)
-    ref_p = gdal.Open(ref_p_file)
+    ref_p = gdal.Open(out_ref_p)
     ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
     ref_p = ref_p.flatten()
     cf_matrix = confusion_matrix(ref_p, prediction)
@@ -70,7 +69,7 @@ def get_kappa(cf_matrix):
     return print(res_kappa)
 
 
-def accuracy(prediction, path_ref_p, ref_p_name):
+def accuracy(prediction, out_ref_p):
     """
     The function calculates the overall accuracy
     ----------
@@ -83,8 +82,7 @@ def accuracy(prediction, path_ref_p, ref_p_name):
     Returns
     -------
     """
-    ref_p_file = os.path.join(path_ref_p, ref_p_name)
-    ref_p = gdal.Open(ref_p_file)
+    ref_p = gdal.Open(out_ref_p)
     ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
     ref_p = ref_p.flatten()
     acc = metrics.accuracy_score(ref_p, prediction)

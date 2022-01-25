@@ -165,8 +165,6 @@ def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_sce
 
     proj_ref_p = osr.SpatialReference(wkt=ref_p.GetProjection())
     epsg_ref_p = proj_ref_p.GetAttrValue('AUTHORITY', 1)
-    gt_ref_p = ref_p.GetGeoTransform()
-    pix_size_clc = gt_ref_p[1]
 
     proj_s1 = osr.SpatialReference(wkt=s1.GetProjection())
     epsg_s1 = proj_s1.GetAttrValue('AUTHORITY', 1)
@@ -179,19 +177,20 @@ def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_sce
     maxx = minx + gt[1] * s1.RasterXSize
     miny = maxy + gt[5] * s1.RasterYSize
 
-    ref_p_res = gdal.Warp('', ref_p, format='VRT', dstSRS='EPSG:{}'.format(epsg_s1), xRes=pix_size_clc,
-                          yRes=pix_size_clc, outputType=gdal.GDT_Int16, outputBounds=[minx, miny, maxx, maxy])
+    ref_p_res = gdal.Warp('', ref_p, format='VRT', dstSRS='EPSG:{}'.format(epsg_s1), outputType=gdal.GDT_Int16,
+                          outputBounds=[minx, miny, maxx, maxy])
 
     out_ref_p = ref_p_file[:-4] + str("_reprojected.tif")
     write_file_gdal(ref_p_res, out_ref_p)
     print(f'reprojected ref_p file from EPSG {epsg_ref_p} to EPSG {epsg_s1} \n'
           f'output file: {out_ref_p}\n')
 
+    ref_p = gdal.Open(out_ref_p)
     for i, raster in enumerate(raster_file_list):
         s1 = gdal.Open(raster_file_list[i])
 
         gt_ref_p = ref_p.GetGeoTransform()
-        psize_clc = gt_ref_p[1]
+        psize_ref_p = gt_ref_p[1]
 
         gt = s1.GetGeoTransform()
         minx = gt[0]
@@ -199,7 +198,7 @@ def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_sce
         maxx = minx + gt[1] * s1.RasterXSize
         miny = maxy + gt[5] * s1.RasterYSize
 
-        s1_res = gdal.Warp('', s1, format='VRT', xRes=psize_clc, yRes=psize_clc,
+        s1_res = gdal.Warp('', s1, format='VRT', xRes=psize_ref_p, yRes=psize_ref_p,
                            outputType=gdal.GDT_Float32, outputBounds=[minx, miny, maxx, maxy])
 
         out_folder = out_folder_resampled_scenes
@@ -214,10 +213,12 @@ def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_sce
             out_file = os.path.join(out_folder, file_name)   # out_folder + file_name
             write_file_gdal(s1_res, out_file)
 
-            print(f'resampled {i+1} scenes from {pix_size_s1}m to {round(psize_clc, 2)}m')
+            print(f'resampled {i+1} scenes from {pix_size_s1}m to {round(psize_ref_p, 2)}m')
+
+    return out_ref_p
 
 
-def prediction_to_gtiff(prediction, op_name, of_name, path_ref_p, ref_p_name, raster_ext):
+def prediction_to_gtiff(prediction, op_name, of_name, out_ref_p, raster_ext):
     """
     The function writes a numpy array to a GTIFF file.
     Parameters
@@ -236,7 +237,7 @@ def prediction_to_gtiff(prediction, op_name, of_name, path_ref_p, ref_p_name, ra
     out_path = os.path.join(op_name, of_name)
 
     # read meta information from reference product
-    ref_p = open_raster_gdal(path_ref_p, ref_p_name)
+    ref_p = gdal.Open(out_ref_p)
     gt = ref_p.GetGeoTransform()
     prj = ref_p.GetProjection()
     srs = osr.SpatialReference(wkt=prj)

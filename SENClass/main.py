@@ -12,7 +12,7 @@ start_time = datetime.now()
 def main():
     #####     INPUTS     #####
     # path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
-    path = "C:/GEO419/Spain_Donana_S1-VV/test/"
+    path = "C:/GEO419/test_env/s1/"
     # path = "/home/felix/PycharmProjects/SENClass/test_data/s1/"
     # path_ref_p = "/home/felix/PycharmProjects/SENClass/test_data/clc/"
 
@@ -22,15 +22,15 @@ def main():
     # out_folder_resampled_scenes = "S1_resamp/"
 
     # path_ref_p = "D:/Uni/GEO419/T2/Abschlussaufgabe/"  # path to reference product
-    path_ref_p = "C:/GEO419/"  # path to reference product
+    path_ref_p = "C:/GEO419/test_env/"  # path to reference product
 
     # file_name = "S1A__IW___A_20180620T182625_147_VV_grd_mli_norm_geo_db_resampled.tif"
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected_3classs.tif"
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected.tif"
     # ref_p_name = "CLC_subset_reclass_reprojected.tif"
-    ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected_3classs_reprojected.tif"  # linux
+    ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_wgs_3classes.tif"  # linux
 
-    op_name = "C:/GEO419/results/"    # path from output folder
+    op_name = "C:/GEO419/test_env/results/"    # path from output folder
     of_name = "test_img"    # name from output file (predicted image)
 
     random_state = np.random.randint(low=0, high=43)  # random value for sample selection and random forest
@@ -42,17 +42,17 @@ def main():
 
     # random forest parameter
     max_depth = 5  # The maximum depth of the tree, default none
-    n_estimator = 50  # The number of trees in the forest, default 100
+    n_estimator = 20  # The number of trees in the forest, default 100
     n_cores = -1  # defines number of cores to use, if -1 all cores are used
     verbose = 2  # shows output from random forrest in console
 
     #####     FUNCTIONS     #####
     # do stuff with geodata
-    geodata.reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_scenes)
+    out_ref_p = geodata.reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_scenes)
 
     # geodata.reclass_clc(path, clc_name=)
     # select samples from scene(s)
-    x_train, x_test, y_train, y_test, data = sample_selection.select_samples(path, path_ref_p, ref_p_name,
+    x_train, x_test, y_train, y_test, data = sample_selection.select_samples(path, path_ref_p, out_ref_p,
                                                                              out_folder_resampled_scenes, raster_ext,
                                                                              train_size, random_state, strat)
 
@@ -60,11 +60,11 @@ def main():
     feature_importance = random_forest.rf_feature_importance(rf)
     print(feature_importance)
     prediction = random_forest.rf_predict(data, rf_fitted)
-    geodata.prediction_to_gtiff(prediction, op_name, of_name, path_ref_p, ref_p_name, raster_ext)
+    geodata.prediction_to_gtiff(prediction, op_name, of_name, out_ref_p, raster_ext)
 
     # get accuracy and other metrics
-    AccuracyAssessment.accuracy(prediction, path_ref_p, ref_p_name)  # get overall accuracy
-    confusion_matrix = AccuracyAssessment.get_confusion_matrix(prediction, path_ref_p, ref_p_name)  # get confusion matrix
+    AccuracyAssessment.accuracy(prediction, out_ref_p)  # get overall accuracy
+    confusion_matrix = AccuracyAssessment.get_confusion_matrix(prediction, out_ref_p)  # get confusion matrix
     AccuracyAssessment.plot_confusion_matrix(confusion_matrix)  # heatmap of Confusion Matrix
     AccuracyAssessment.get_kappa(confusion_matrix)  # get Cappa Coefficient
     plt.show()

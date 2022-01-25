@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-def select_samples(path, path_ref_p, ref_p_name, out_folder_resampled_scenes, raster_ext, train_size, random_state,
+def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, raster_ext, train_size, random_state,
                    strat):
     """
     The function select samples for training and testing. The user has the choice between two methods to select the
@@ -50,7 +50,7 @@ def select_samples(path, path_ref_p, ref_p_name, out_folder_resampled_scenes, ra
 
     len_ras_li = len(raster_file_list)  # number of satellite images
 
-    ref_p = geodata.open_raster_gdal(path_ref_p, ref_p_name)
+    ref_p = geodata.open_raster_gdal(path_ref_p, out_ref_p)
     ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
 
     print(f"Creating data frame with labels and pixel values from satellite images")
