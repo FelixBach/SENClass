@@ -3,9 +3,9 @@ AccuracyAssessment.py: contains functions to assess the accuracy of the RF class
     - Confusion matrix (CM)
     - Kappa statistic (Kappa)
 @author: Anastasiia Vynohradova
-
 """
-
+import os
+import gdal
 import numpy as np
 import seaborn as sns
 from sklearn import metrics as metrics
@@ -14,7 +14,7 @@ from statsmodels.stats.inter_rater import cohens_kappa
 
 
 # Function to create fancy confusion matrix
-def get_confusion_matrix(y_test, y_pred):
+def get_confusion_matrix(prediction, path_ref_p, ref_p_name):
     """
     The function calls the confusion_matrix from sklearn.metrics
     Parameters
@@ -23,13 +23,16 @@ def get_confusion_matrix(y_test, y_pred):
         list with test values
     y_pred: numpy.ndarray
         array with the predicted labels
-
     Returns
     -------
     cf_matrix: numpy.ndarray
         array with confusion matrix
     """
-    cf_matrix = confusion_matrix(y_test, y_pred)
+    ref_p_file = os.path.join(path_ref_p, ref_p_name)
+    ref_p = gdal.Open(ref_p_file)
+    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+    ref_p = ref_p.flatten()
+    cf_matrix = confusion_matrix(ref_p, prediction)
     return cf_matrix
 
 
@@ -67,7 +70,7 @@ def get_kappa(cf_matrix):
     return print(res_kappa)
 
 
-def accuracy(pred, y_test):
+def accuracy(prediction, path_ref_p, ref_p_name):
     """
     The function calculates the overall accuracy
     ----------
@@ -80,7 +83,11 @@ def accuracy(pred, y_test):
     Returns
     -------
     """
-    acc = metrics.accuracy_score(y_test, pred)
+    ref_p_file = os.path.join(path_ref_p, ref_p_name)
+    ref_p = gdal.Open(ref_p_file)
+    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+    ref_p = ref_p.flatten()
+    acc = metrics.accuracy_score(ref_p, prediction)
     res = f'Overall accuracy is {acc}'
 
     return print(res)

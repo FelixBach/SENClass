@@ -11,35 +11,6 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-def sampler(nanmask, nsamples, seed):
-    """
-    central function to select random samples from arrays.
-
-    Parameters
-    ----------
-    nanmask: numpy.ndarray
-        a mask to limit the sample selection
-    nsamples: int
-        the number of samples to select
-    seed: int
-        seed used to initialize the pseudo-random number generator
-    Returns
-    -------
-    numpy.ndarray
-        the generated random samples
-
-    See Also
-    --------
-    numpy.random.seed
-    numpy.random.choice
-    """
-    indices = np.where(nanmask.flatten())[0]
-    samplesize = min(indices.size, nsamples) if nsamples is not None else indices.size
-    np.random.seed(seed)
-    sample_ids = np.random.choice(a=indices, size=samplesize, replace=False)
-    return sample_ids
-
-
 def select_samples(path, path_ref_p, ref_p_name, out_folder_resampled_scenes, raster_ext, train_size, random_state,
                    strat):
     """

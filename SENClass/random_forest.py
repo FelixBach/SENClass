@@ -21,7 +21,6 @@ def rf_fit(max_depth, random_state, n_estimators, n_cores, verbose, x_train, y_t
     verbose
     x_train
     y_train
-
     Returns
     -------
     sklearn.ensemble._forest.RandomForestClassifier
@@ -35,11 +34,9 @@ def rf_fit(max_depth, random_state, n_estimators, n_cores, verbose, x_train, y_t
 
 def rf_feature_importance(rf):
     """
-
     Parameters
     ----------
     rf
-
     Returns
     -------
     numpy.ndarray
@@ -49,20 +46,17 @@ def rf_feature_importance(rf):
     return feature_importance
 
 
-def rf_predict(data, rf_fitted, x_test):
+def rf_predict(data, rf_fitted):
     """
-
     Parameters
     ----------
     data
     rf_fitted
-
     Returns
     -------
     numpy.ndarray
     """
     data = data.iloc[:, 1:]
     prediction = rf_fitted.predict(data)
-    prediction_test = rf_fitted.predict(x_test)
 
-    return prediction, prediction_test
+    return prediction

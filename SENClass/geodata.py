@@ -14,14 +14,12 @@ import rasterio as rio
 def parse_folder(path, raster_ext):
     """
     Returns a list with all raster files in a folder
-
     Parameters
     ----------
     path: string
         Path to folder with raster files
     raster_ext: string
         specifies raster format
-
     Examples
     --------
     Returns
@@ -42,7 +40,6 @@ def parse_folder(path, raster_ext):
 def open_raster_gdal(path, file_name):
     """
     The function opens raster files from folder/raster_file_list
-
     Parameters
     ----------
     path: string
@@ -65,7 +62,6 @@ def open_raster_gdal(path, file_name):
 def write_file_gdal(gdal_file, out_file):
     """
     Saves gdal files to disk.
-
     Parameters
     ----------
     gdal_file: GDAL file object
@@ -99,7 +95,6 @@ def write_file_gdal(gdal_file, out_file):
 def reclass_clc(path_ref_p, clc_name):
     """
     The CLC values are divided into five new classes.
-
     Parameters
     ----------
     path_ref_p: string
@@ -160,7 +155,6 @@ def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_sce
         path for the output folder with the resampled scenes
     Returns
     -------
-
     """
     raster_file_list, raster_file_name = parse_folder(path, raster_ext)
     print(f'folder contains {len(raster_file_list)} raster files \n')
@@ -220,7 +214,7 @@ def reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_sce
             out_file = os.path.join(out_folder, file_name)   # out_folder + file_name
             write_file_gdal(s1_res, out_file)
 
-            print(f'resampled {i+1} scenes from {pix_size_s1}m to {psize_clc}m')
+            print(f'resampled {i+1} scenes from {pix_size_s1}m to {round(psize_clc, 2)}m')
 
 
 def prediction_to_gtiff(prediction, op_name, of_name, path_ref_p, ref_p_name, raster_ext):
@@ -234,10 +228,8 @@ def prediction_to_gtiff(prediction, op_name, of_name, path_ref_p, ref_p_name, ra
     path_ref_p
     ref_p_name
     raster_ext
-
     Returns
     -------
-
     """
     # creates output file
     of_name = of_name + "." + raster_ext
@@ -256,7 +248,6 @@ def prediction_to_gtiff(prediction, op_name, of_name, path_ref_p, ref_p_name, ra
     driver = gdal.GetDriverByName('GTIFF')
     rows, cols = ref_p.shape
     out_ds = driver.Create(out_path, cols, rows, 1, gdal.GDT_UInt16)
-    print(type(out_ds))
     # writting output raster
     out_ds.GetRasterBand(1).WriteArray(grid)
     out_ds.SetGeoTransform(gt)
