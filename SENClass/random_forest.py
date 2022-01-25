@@ -49,7 +49,7 @@ def rf_feature_importance(rf):
     return feature_importance
 
 
-def rf_predict(data, rf_fitted):
+def rf_predict(data, rf_fitted, x_test):
     """
 
     Parameters
@@ -63,5 +63,6 @@ def rf_predict(data, rf_fitted):
     """
     data = data.iloc[:, 1:]
     prediction = rf_fitted.predict(data)
+    prediction_test = rf_fitted.predict(x_test)
 
-    return prediction
+    return prediction, prediction_test
