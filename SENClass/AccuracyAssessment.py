@@ -3,9 +3,9 @@ AccuracyAssessment.py: contains functions to assess the accuracy of the RF class
     - Confusion matrix (CM)
     - Kappa statistic (Kappa)
 @author: Anastasiia Vynohradova
-
 """
-
+import os
+import gdal
 import numpy as np
 import seaborn as sns
 from sklearn import metrics as metrics
@@ -14,22 +14,24 @@ from statsmodels.stats.inter_rater import cohens_kappa
 
 
 # Function to create fancy confusion matrix
-def get_confusion_matrix(y_test, y_pred):
+def get_confusion_matrix(prediction, out_ref_p):
     """
     The function calls the confusion_matrix from sklearn.metrics
     Parameters
     ----------
-    y_test: pandas.Series
-        list with test values
-    y_pred: numpy.ndarray
+    prediction: numpy.ndarray
         array with the predicted labels
-
+    out_ref_p: string
+        path to resampled/reclassified reference product
     Returns
     -------
     cf_matrix: numpy.ndarray
         array with confusion matrix
     """
-    cf_matrix = confusion_matrix(y_test, y_pred)
+    ref_p = gdal.Open(out_ref_p)
+    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+    ref_p = ref_p.flatten()
+    cf_matrix = confusion_matrix(ref_p, prediction)
     return cf_matrix
 
 
@@ -67,20 +69,23 @@ def get_kappa(cf_matrix):
     return print(res_kappa)
 
 
-def accuracy(pred, y_test):
+def accuracy(prediction, out_ref_p):
     """
-    The function calculates the overall accuracy
+        The function calculates the overall accuracy
+    Parameters
     ----------
-    pred: array
+    prediction: numpy.ndarray
         array with the predicted labels
-    y_test: array
-        array with the values from the reclassified clc mask
-    Examples
-    --------
+    out_ref_p:
+        path to resampled/reclassified reference product
     Returns
     -------
+
     """
-    acc = metrics.accuracy_score(y_test, pred)
+    ref_p = gdal.Open(out_ref_p)
+    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+    ref_p = ref_p.flatten()
+    acc = metrics.accuracy_score(ref_p, prediction)
     res = f'Overall accuracy is {acc}'
 
     return print(res)
