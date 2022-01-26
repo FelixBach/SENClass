@@ -33,16 +33,16 @@ def main():
     out_folder_prediction = "results/"    # path from output folder
     name_predicted_image = "prediction_1"
 
-    # random_state = np.random.randint(low=0, high=43)  # random value for sample selection and random forest
-    random_state = 0
+    random_state = np.random.randint(low=0, high=43)  # random value for sample selection and random forest
+    # random_state = 0
 
     # inputs for sample_selection.select_samples
     train_size = 0.25  # Specifies how many samples are used for training
-    strat = False  # True: using stratified random sampling, False: using random sampling
+    strat = True  # True: using stratified random sampling, False: using random sampling
 
     # random forest parameter
-    max_depth = 2  # The maximum depth of the tree, default none
-    n_estimator = 3  # The number of trees in the forest, default 100
+    max_depth = 3  # The maximum depth of the tree, default none
+    n_estimator = 100  # The number of trees in the forest, default 100
     n_cores = -1  # defines number of cores to use, if -1 all cores are used
     verbose = 2  # shows output from random forrest in console
 
@@ -59,6 +59,9 @@ def main():
     # train random forest and predict result
     rf, rf_fitted = random_forest.rf_fit(max_depth, random_state, n_estimator, n_cores, verbose, x_train, y_train)
     prediction = random_forest.rf_predict(data, rf_fitted)
+
+    # random_forest.rf_feature_selection(rf, x_train, y_train, prediction, out_ref_p, data)
+
     geodata.prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext)
 
     # get accuracy and other metrics
