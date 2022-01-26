@@ -28,7 +28,7 @@ def main():
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected_3classs.tif"
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected.tif"
     # ref_p_name = "CLC_subset_reclass_reprojected.tif"
-    ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_wgs_3classes.tif"  # linux
+    ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_wgs.tif"  # linux
 
     op_name = "C:/GEO419/test_env/results/"    # path from output folder
     of_name = "test_img"    # name from output file (predicted image)
@@ -47,18 +47,17 @@ def main():
     verbose = 2  # shows output from random forrest in console
 
     #####     FUNCTIONS     #####
-    # do stuff with geodata
-    out_ref_p = geodata.reproject(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_scenes)
+    # reprojecting and reclassifying raster data
+    out_ref_p = geodata.reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_scenes)
+    geodata.reclass_raster(out_ref_p)
 
-    # geodata.reclass_clc(path, clc_name=)
     # select samples from scene(s)
     x_train, x_test, y_train, y_test, data = sample_selection.select_samples(path, path_ref_p, out_ref_p,
                                                                              out_folder_resampled_scenes, raster_ext,
                                                                              train_size, random_state, strat)
 
+    # train random forest and predict result
     rf, rf_fitted = random_forest.rf_fit(max_depth, random_state, n_estimator, n_cores, verbose, x_train, y_train)
-    feature_importance = random_forest.rf_feature_importance(rf)
-    print(feature_importance)
     prediction = random_forest.rf_predict(data, rf_fitted)
     geodata.prediction_to_gtiff(prediction, op_name, of_name, out_ref_p, raster_ext)
 
