@@ -97,7 +97,8 @@ def reclass_raster(out_ref_p):
 
     Parameters
     ----------
-    out_ref_p
+    out_ref_p: string
+        path to resampled/reclassified reference product
 
     Returns
     -------
@@ -211,15 +212,16 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
     return out_ref_p
 
 
-def prediction_to_gtiff(prediction, op_name, of_name, out_ref_p, raster_ext):
+def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext):
     """
         The function writes the predicted array to a GTIFF file.
 
     Parameters
     ----------
     prediction
-    op_name
-    of_name
+    path
+    out_folder_prediction
+    name_predicted_image
     out_ref_p
     raster_ext
 
@@ -228,28 +230,36 @@ def prediction_to_gtiff(prediction, op_name, of_name, out_ref_p, raster_ext):
 
     """
     # creates output file
-    of_name = of_name + "." + raster_ext
-    out_path = os.path.join(op_name, of_name)
+    out_folder = os.path.join(path, out_folder_prediction)
 
-    # read meta information from reference product
-    ref_p = gdal.Open(out_ref_p)
-    gt = ref_p.GetGeoTransform()
-    prj = ref_p.GetProjection()
-    srs = osr.SpatialReference(wkt=prj)
-    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
-    cols, rows = ref_p.shape
+    # create directory for resampled Sentinel scenes
+    if not os.path.isdir(out_folder):
+        os.makedirs(out_folder)
 
-    # reshaping prediction and saving raster with meta information from reference product to disk
-    grid = prediction.reshape((cols, rows))
-    driver = gdal.GetDriverByName('GTIFF')
-    rows, cols = ref_p.shape
-    out_ds = driver.Create(out_path, cols, rows, 1, gdal.GDT_UInt16)
-    # writting output raster
-    out_ds.GetRasterBand(1).WriteArray(grid)
-    out_ds.SetGeoTransform(gt)
-    # setting spatial reference of output raster
-    out_ds.SetProjection(srs.ExportToWkt())
-    # Close output raster dataset
-    out_ds = None
+    file_name = out_folder + str("name_predicted_image") + str(".") + raster_ext
+    file_check = os.path.join(out_folder, file_name)
+    if not os.path.isfile(file_check):
+        # read meta information from reference product
+        ref_p = gdal.Open(out_ref_p)
+        gt = ref_p.GetGeoTransform()
+        prj = ref_p.GetProjection()
+        srs = osr.SpatialReference(wkt=prj)
+        ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+        cols, rows = ref_p.shape
 
+        # reshaping prediction and saving raster with meta information from reference product to disk
+        grid = prediction.reshape((cols, rows))
+        driver = gdal.GetDriverByName('GTIFF')
+        rows, cols = ref_p.shape
+        out_ds = driver.Create(file_name, cols, rows, 1, gdal.GDT_UInt16)
+        # writting output raster
+        out_ds.GetRasterBand(1).WriteArray(grid)
+        out_ds.SetGeoTransform(gt)
+        # setting spatial reference of output raster
+        out_ds.SetProjection(srs.ExportToWkt())
+        # Close output raster dataset
+        out_ds = None
+        print(f'GTIFF created from predicted labels')
+    else:
+        print(f'predicted image already exists')
     return

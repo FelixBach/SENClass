@@ -30,19 +30,19 @@ def main():
     # ref_p_name = "CLC_subset_reclass_reprojected.tif"
     ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_wgs.tif"  # linux
 
-    op_name = "C:/GEO419/test_env/results/"    # path from output folder
-    of_name = "test_img"    # name from output file (predicted image)
+    out_folder_prediction = "results/"    # path from output folder
+    name_predicted_image = "prediction_1"
 
-    random_state = np.random.randint(low=0, high=43)  # random value for sample selection and random forest
-    # random_state = 0
+    # random_state = np.random.randint(low=0, high=43)  # random value for sample selection and random forest
+    random_state = 0
 
     # inputs for sample_selection.select_samples
-    train_size = 0.50  # Specifies how many samples are used for training
+    train_size = 0.25  # Specifies how many samples are used for training
     strat = False  # True: using stratified random sampling, False: using random sampling
 
     # random forest parameter
-    max_depth = 5  # The maximum depth of the tree, default none
-    n_estimator = 20  # The number of trees in the forest, default 100
+    max_depth = 2  # The maximum depth of the tree, default none
+    n_estimator = 3  # The number of trees in the forest, default 100
     n_cores = -1  # defines number of cores to use, if -1 all cores are used
     verbose = 2  # shows output from random forrest in console
 
@@ -59,17 +59,18 @@ def main():
     # train random forest and predict result
     rf, rf_fitted = random_forest.rf_fit(max_depth, random_state, n_estimator, n_cores, verbose, x_train, y_train)
     prediction = random_forest.rf_predict(data, rf_fitted)
-    geodata.prediction_to_gtiff(prediction, op_name, of_name, out_ref_p, raster_ext)
+    geodata.prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext)
 
     # get accuracy and other metrics
     AccuracyAssessment.accuracy(prediction, out_ref_p)  # get overall accuracy
     confusion_matrix = AccuracyAssessment.get_confusion_matrix(prediction, out_ref_p)  # get confusion matrix
     AccuracyAssessment.plot_confusion_matrix(confusion_matrix)  # heatmap of Confusion Matrix
     AccuracyAssessment.get_kappa(confusion_matrix)  # get Cappa Coefficient
-    plt.show()
 
     end_time = datetime.now()
     print(f"\n end-time =", end_time - start_time, "Hr:min:sec \n")
+
+    plt.show()
 
 
 # main func

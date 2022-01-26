@@ -19,10 +19,10 @@ def get_confusion_matrix(prediction, out_ref_p):
     The function calls the confusion_matrix from sklearn.metrics
     Parameters
     ----------
-    y_test: pandas.Series
-        list with test values
-    y_pred: numpy.ndarray
+    prediction: numpy.ndarray
         array with the predicted labels
+    out_ref_p: string
+        path to resampled/reclassified reference product
     Returns
     -------
     cf_matrix: numpy.ndarray
@@ -71,16 +71,16 @@ def get_kappa(cf_matrix):
 
 def accuracy(prediction, out_ref_p):
     """
-    The function calculates the overall accuracy
+        The function calculates the overall accuracy
+    Parameters
     ----------
-    pred: array
+    prediction: numpy.ndarray
         array with the predicted labels
-    y_test: array
-        array with the values from the reclassified clc mask
-    Examples
-    --------
+    out_ref_p:
+        path to resampled/reclassified reference product
     Returns
     -------
+
     """
     ref_p = gdal.Open(out_ref_p)
     ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
