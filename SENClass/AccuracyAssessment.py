@@ -9,7 +9,7 @@ import gdal
 import numpy as np
 import seaborn as sns
 from sklearn import metrics as metrics
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, balanced_accuracy_score
 from statsmodels.stats.inter_rater import cohens_kappa
 
 
@@ -87,5 +87,7 @@ def accuracy(prediction, out_ref_p):
     ref_p = ref_p.flatten()
     acc = metrics.accuracy_score(ref_p, prediction)
     res = f'Overall accuracy is {acc}'
+    balanced_acc = balanced_accuracy_score(ref_p, prediction)
+    balanced_acc = f'Balanced accuracy is {balanced_acc}'
 
-    return print(res)
+    return print(res), print(balanced_acc)
