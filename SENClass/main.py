@@ -13,7 +13,9 @@ def main():
     #####     INPUTS     #####
     # path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
     # path = "C:/GEO419/test_env/s1/"
+    path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
     path = "/home/felix/Dokumente/SENClass/test_env/10_files/"
+    #path = "C:/GEO419/test_env/s1/"
 
     raster_ext = "tif"
     out_folder_resampled_scenes = "resamp/"
@@ -24,11 +26,10 @@ def main():
     path_ref_p = "C:/GEO419/test_env/"  # path to reference product
     path_ref_p = "/home/felix/Dokumente/SENClass/test_env"
 
-    # file_name = "S1A__IW___A_20180620T182625_147_VV_grd_mli_norm_geo_db_resampled.tif"
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected_3classs.tif"
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected.tif"
     ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_wgs.tif"
-    # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_wgs.tif"  # linux
+    # path_ref_p = "C:/GEO419/test_env/"  # path to reference product
 
     out_folder_prediction = "results/"  # path from output folder
     name_predicted_image = "prediction_1"
@@ -61,7 +62,7 @@ def main():
     geodata.reclass_raster(out_ref_p)
 
     # select samples from scene(s)
-    x_train, x_test, y_train, y_test, data = sample_selection.select_samples(path, path_ref_p, out_ref_p,
+    x_train, x_test, y_train, y_test, data, mask = sample_selection.select_samples(path, path_ref_p, out_ref_p,
                                                                              out_folder_resampled_scenes, raster_ext,
                                                                              train_size, random_state, strat)
 
@@ -70,6 +71,9 @@ def main():
 
     # train random forest
     rf_fitted = random_forest.rf_fit(rf, x_train, y_train)
+    
+    # implement PCA Transformation
+    #data, x_train = random_forest.principal(data, x_train)
     prediction = random_forest.rf_predict(data, rf_fitted)
 
     print("Acc for base model")
@@ -78,7 +82,7 @@ def main():
     AccuracyAssessment.plot_confusion_matrix(base_matrix)  # heatmap of Confusion Matrix
     AccuracyAssessment.get_kappa(base_matrix)
 
-    # geodata.prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext)
+    geodata.prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext, mask)
 
     tuned_prediction = random_forest.rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_estimator,
                                                          max_estimator, number_estimator, n_iter, cv, random_state,
