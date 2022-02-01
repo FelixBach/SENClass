@@ -68,6 +68,12 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
         layer = pd.Series(np.array(file).flat)
         df['file_{}'.format(i)] = layer
 
+    # create an edge mask with NaN values
+    raster = gdal.Open(raster_file_list[1])
+    raster = np.array(raster.GetRasterBand(1).ReadAsArray())
+    raster[raster == -99] = np.nan
+    mask = np.isnan(raster)
+
     data = df
     df2 = df[df != -99]  # remove all -99 values from data frame
     df2 = df2.dropna()  # remove all NaN values from data frame
@@ -85,7 +91,7 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
             y_train, y_test = y[train_index], y[test_index]
 
         print(f"{len(x_train)} pixels used for training \n")
-        return x_train, x_test, y_train, y_test, data
+        return x_train, x_test, y_train, y_test, data, mask
 
     else:
         print(f"Using train_test_split sample selection")
@@ -97,4 +103,4 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
 
         print(f"{len(x_train)} pixels used for training \n")
 
-        return x_train, x_test, y_train, y_test, data
+        return x_train, x_test, y_train, y_test, data, mask
