@@ -78,6 +78,7 @@ def main():
 
     # implement PCA Transformation
     # data, x_train = pca.principal(data, x_train)
+
     prediction = random_forest.rf_predict(data, rf_fitted)
 
     print("Acc for base model")
