@@ -68,7 +68,6 @@ def main():
                                                                                    out_folder_resampled_scenes,
                                                                                    raster_ext,
                                                                                    train_size, random_state, strat)
-
     print(type(data))
     # create random forest
     rf = random_forest.rf_create(max_depth, random_state, n_estimator, n_cores, verbose)
