@@ -90,7 +90,7 @@ def rf_predict(data, rf_fitted):
     numpy.ndarray
         Array with predicted labels
     """
-    data = data.iloc[:, 1:]
+    # data = data.iloc[:, 1:]
     prediction = rf_fitted.predict(data)
 
     return prediction

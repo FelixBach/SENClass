@@ -75,6 +75,7 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
     mask = np.isnan(raster)
 
     data = df
+    data = data.iloc[:, 1:]
     df2 = df[df != -99]  # remove all -99 values from data frame
     df2 = df2.dropna()  # remove all NaN values from data frame
 
