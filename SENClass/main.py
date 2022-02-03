@@ -40,7 +40,7 @@ def main():
 
     # inputs for sample_selection.select_samples
     train_size = 0.25  # Specifies how many samples are used for training
-    strat = False  # True: using stratified random sampling, False: using random sampling
+    sss = False  # True: using StratifiedShuffleSplit, False: using train_test_split for sampling
 
     # random forest parameter
     max_depth = 2  # The maximum depth of the tree, default none
