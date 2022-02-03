@@ -15,8 +15,8 @@ def main():
     # path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
     # path = "C:/GEO419/test_env/s1/"
     # path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
-    # path = "/home/felix/Dokumente/SENClass/test_env/10_files/"
-    path = "C:/GEO419/test_env/s1/"
+    path = "/home/felix/Dokumente/SENClass/test_env/10_files/"
+    # path = "C:/GEO419/test_env/s1/"
 
     raster_ext = "tif"
     out_folder_resampled_scenes = "resamp/"
@@ -24,8 +24,8 @@ def main():
     # out_folder_resampled_scenes = "S1_resamp/"
 
     # path_ref_p = "D:/Uni/GEO419/T2/Abschlussaufgabe/"  # path to reference product
-    path_ref_p = "C:/GEO419/test_env/"  # path to reference product
-    # path_ref_p = "/home/felix/Dokumente/SENClass/test_env"
+    # path_ref_p = "C:/GEO419/test_env/"  # path to reference product
+    path_ref_p = "/home/felix/Dokumente/SENClass/test_env"
 
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected_3classs.tif"
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected.tif"
@@ -33,7 +33,7 @@ def main():
     # path_ref_p = "C:/GEO419/test_env/"  # path to reference product
 
     out_folder_prediction = "results/"  # path from output folder
-    name_predicted_image = "real_tuned_prediction"
+    name_predicted_image = "base_prediction_nd_0"
 
     # random_state = np.random.randint(low=0, high=43)  # random value for sample selection and random forest
     random_state = 0
@@ -60,7 +60,7 @@ def main():
     #####     FUNCTIONS     #####
     # reprojecting and reclassifying raster data
     out_ref_p = geodata.reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_scenes)
-    # geodata.reclass_raster(out_ref_p)
+    geodata.reclass_raster(out_ref_p)
 
     # select samples from scene(s)
     x_train, x_test, y_train, y_test, data, mask = sample_selection.select_samples(path, path_ref_p, out_ref_p,
@@ -68,7 +68,7 @@ def main():
                                                                                    raster_ext,
                                                                                    train_size, random_state, strat)
     # implement PCA Transformation
-    data, x_train = pca.principal(data, x_train)
+    # data, x_train = pca.principal(data, x_train)
 
     # create random forest
     rf = random_forest.rf_create(max_depth, random_state, n_estimator, n_cores, verbose)
@@ -84,8 +84,8 @@ def main():
     AccuracyAssessment.plot_confusion_matrix(base_matrix)  # heatmap of Confusion Matrix
     AccuracyAssessment.get_kappa(base_matrix)
 
-    # geodata.prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext,
-    #                             mask)
+    geodata.prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext,
+                                mask)
 
     tuned_prediction = random_forest.rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t,
                                                          min_estimator, max_estimator, value_generator, n_iter, cv,

@@ -254,9 +254,11 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
         # apply an edge mask with NaN values
         grid[mask] = np.nan
 
+        nodata = 0
         out_ds = driver.Create(file_name, cols, rows, 1, gdal.GDT_UInt16)
         # writing output raster
         out_ds.GetRasterBand(1).WriteArray(grid)
+        out_ds.GetRasterBand(1).SetNoDataValue(nodata)
         out_ds.SetGeoTransform(gt)
         # setting spatial reference of output raster
         out_ds.SetProjection(srs.ExportToWkt())
