@@ -66,7 +66,7 @@ def main():
     x_train, x_test, y_train, y_test, data, mask = sample_selection.select_samples(path, path_ref_p, out_ref_p,
                                                                                    out_folder_resampled_scenes,
                                                                                    raster_ext,
-                                                                                   train_size, random_state, strat)
+                                                                                   train_size, random_state, sss)
     # implement PCA Transformation
     # data, x_train = pca.principal(data, x_train)
 
