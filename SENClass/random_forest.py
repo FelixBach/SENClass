@@ -62,7 +62,7 @@ def rf_predict(data, rf_fitted):
     -------
     numpy.ndarray
     """
-    data = data.iloc[:, 1:]
+    # data = data.iloc[:, 1:]
     prediction = rf_fitted.predict(data)
 
     return prediction

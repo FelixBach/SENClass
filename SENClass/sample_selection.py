@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
 
 
 def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, raster_ext, train_size, random_state,
-                   strat):
+                   sss):
     """
     The function select samples for training and testing. The user has the choice between two methods to select the
     test and training pixels. If strat is set to true, the pixels and labels are selected using the sklearn algorithm
@@ -75,12 +75,13 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
     mask = np.isnan(raster)
 
     data = df
+    data = data.iloc[:, 1:]
     df2 = df[df != -99]  # remove all -99 values from data frame
     df2 = df2.dropna()  # remove all NaN values from data frame
 
     print(f"Removing -99 and NaN-values from data frame")
 
-    if strat:
+    if sss:
         print(f"Using StratifiedShuffleSplit for sample selection")
         row_count = df2.shape[1]  # get max rows from data frame
         x = df2.iloc[:, 1:row_count].values
@@ -99,7 +100,8 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
 
         x = df2.iloc[:, 1:row_count].values
         y = df2.iloc[:, 0].values
-        x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=train_size, random_state=random_state)
+        x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=train_size, random_state=random_state,
+                                                            stratify=y)
 
         print(f"{len(x_train)} pixels used for training \n")
 
