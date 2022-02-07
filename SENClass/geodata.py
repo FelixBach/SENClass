@@ -24,7 +24,7 @@ def parse_folder(path, raster_ext):
     Returns
     -------
     list
-        list of all raster files in folder
+        list of all raster files and raster names in a folder
     """
     raster_file_list = []
     raster_file_name = []
@@ -87,8 +87,6 @@ def write_file_gdal(gdal_file, out_file):
         out_file.GetRasterBand(i + 1).WriteArray(band)
 
     out_file.FlushCache()  # save from memory to disk
-
-    return
 
 
 def reclass_raster(out_ref_p):
@@ -214,23 +212,29 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
         The function writes the predicted array to a GTIFF file.
     Parameters
     ----------
-    prediction
-    path
-    out_folder_prediction
-    name_predicted_image
-    out_ref_p
-    raster_ext
-    Returns
+    prediction:
+
+    path: string
+        Path to folder with satellite files
+    out_folder_prediction: string
+        Name for the output folder for the predicted image
+    name_predicted_image: string
+        Name of the predicted image
+    out_ref_p: string
+        Path to reprojected/reclassified reference product
+    raster_ext: string
+        extension from raster files    Returns
     -------
     """
-    # creates output file
+    # create name for output folder
     out_folder = os.path.join(path, out_folder_prediction)
 
-    # create directory for resampled Sentinel scenes
+    # create directory for predicted image
     if not os.path.isdir(out_folder):
         os.makedirs(out_folder)
 
-    file_name = out_folder + str("name_predicted_image") + str(".") + raster_ext
+    # create file name and check for existing
+    file_name = out_folder + name_predicted_image + str(".") + raster_ext
     file_check = os.path.join(out_folder, file_name)
     if not os.path.isfile(file_check):
         # read meta information from reference product
@@ -247,7 +251,7 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
         rows, cols = ref_p.shape
         grid = grid.astype('float32')
 
-        #apply an edge mask with NaN values
+        # apply an edge mask with NaN values
         grid[mask] = np.nan
 
         out_ds = driver.Create(file_name, cols, rows, 1, gdal.GDT_UInt16)
@@ -261,4 +265,3 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
         print(f'GTIFF created from predicted labels')
     else:
         print(f'predicted image already exists')
-    return

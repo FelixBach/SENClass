@@ -10,7 +10,7 @@ import pandas as pd
 from sklearn import ensemble as ensemble
 from sklearn.feature_selection import SelectFromModel
 from sklearn import metrics as metrics
-from sklearn.decomposition import PCA
+
 
 warnings.simplefilter("ignore", UserWarning)
 
@@ -67,12 +67,6 @@ def rf_predict(data, rf_fitted):
 
     return prediction
 
-def principal(data, x_train):
-    pca = PCA(n_components=15)
-    data_transformed = pca.fit_transform(data)
-    x_train_transformed = pca.fit_transform(x_train)
-
-    return data_transformed, x_train_transformed
 
 def rf_feature_selection(rf, x_train, y_train, prediction, out_ref_p, data):
     """

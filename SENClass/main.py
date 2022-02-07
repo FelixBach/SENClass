@@ -1,13 +1,11 @@
 from datetime import datetime
-import geodata
-from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import geodata
 import sample_selection
 import random_forest
 import AccuracyAssessment
-import pca
+
 start_time = datetime.now()
 
 
@@ -68,6 +66,7 @@ def main():
                                                                                    out_folder_resampled_scenes,
                                                                                    raster_ext,
                                                                                    train_size, random_state, strat)
+
     print(type(data))
     # create random forest
     rf = random_forest.rf_create(max_depth, random_state, n_estimator, n_cores, verbose)
@@ -76,7 +75,7 @@ def main():
     rf_fitted = random_forest.rf_fit(rf, x_train, y_train)
 
     # implement PCA Transformation
-    # data, x_train = pca.principal(data, x_train)
+    # data, x_train = random_forest.principal(data, x_train)
     prediction = random_forest.rf_predict(data, rf_fitted)
 
     print("Acc for base model")
