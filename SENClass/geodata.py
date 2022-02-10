@@ -26,6 +26,7 @@ def parse_folder(path, raster_ext):
     list
         list of all raster files and raster names in a folder
     """
+    print('\n##########   -   Searching for files   -   ##########')
     raster_file_list = []
     raster_file_name = []
     for file in glob.glob(path + "*" + raster_ext):
@@ -99,6 +100,7 @@ def reclass_raster(out_ref_p):
     Returns
     -------
     """
+    print('\n##########   -   Reclassifying data   -   ##########')
     ref_p = gdal.Open(out_ref_p)
 
     gt = ref_p.GetGeoTransform()
@@ -139,10 +141,12 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
     Returns
     -------
     """
+    print('\n####################   -   Preparing the Geodata   -   ####################')
     # search for files in input folder
     raster_file_list, raster_file_name = parse_folder(path, raster_ext)
-    print(f'folder contains {len(raster_file_list)} raster files \n')
+    print(f'{path} contains {len(raster_file_list)} raster files \n')
 
+    print('\n##########   -   Reprojecting data   -   ##########')
     # get spatial reference from reference product
     ref_p_file = os.path.join(path_ref_p, ref_p_name)
     ref_p = gdal.Open(ref_p_file)
@@ -168,8 +172,14 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
     # writing reprojected reference product to disk
     out_ref_p = ref_p_file[:-4] + str("_reprojected.tif")
     write_file_gdal(ref_p_res, out_ref_p)
-    print(f'reprojected ref_p file from EPSG {epsg_ref_p} to EPSG {epsg_s1} \n'
-          f'output file: {out_ref_p}\n')
+    print(f'reprojected {ref_p_file} file from EPSG {epsg_ref_p} to EPSG {epsg_s1} \n'
+          f'location from resampled file: {out_ref_p}\n')
+
+    # create directory for resampled Sentinel scenes
+    out_folder = out_folder_resampled_scenes
+    out_folder = os.path.join(path, out_folder)
+    if not os.path.isdir(out_folder):
+        os.makedirs(out_folder)
 
     # resampling satellite data
     ref_p = gdal.Open(out_ref_p)
@@ -188,13 +198,6 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
         s1_res = gdal.Warp('', s1, format='VRT', xRes=psize_ref_p, yRes=psize_ref_p,
                            outputType=gdal.GDT_Float32, outputBounds=[minx, miny, maxx, maxy])
 
-        out_folder = out_folder_resampled_scenes
-        out_folder = os.path.join(path, out_folder)
-
-        # create directory for resampled Sentinel scenes
-        if not os.path.isdir(out_folder):
-            os.makedirs(out_folder)
-
         file_name = raster_file_name[i] + str("_resampled.tif")
         file_check = os.path.join(out_folder, file_name)
         if not os.path.isfile(file_check):
@@ -204,6 +207,7 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
         else:
             print(f'resampled file already exists')
 
+    print(f'location from resampled satellite images: {out_folder}\n')
     return out_ref_p
 
 
@@ -237,6 +241,7 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
     file_name = out_folder + name_predicted_image + str(".") + raster_ext
     file_check = os.path.join(out_folder, file_name)
     if not os.path.isfile(file_check):
+        print('\n##########   -   save predicted image   -   ##########')
         # read meta information from reference product
         ref_p = gdal.Open(out_ref_p)
         gt = ref_p.GetGeoTransform()

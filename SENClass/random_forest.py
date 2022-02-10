@@ -35,8 +35,11 @@ def rf_create(max_depth, random_state, n_estimators, n_cores, verbose):
     sklearn.ensemble._forest.RandomForestClassifier
         unfitted RandomForest model
     """
+    print('####################   -   Start RandomForest classification  -   ####################')
+    print('\n##########   -   Creating RandomForest   -   ##########')
     rf = ensemble.RandomForestClassifier(max_depth=max_depth, random_state=random_state, n_estimators=n_estimators,
                                          n_jobs=n_cores, verbose=verbose)
+    print(f'RandomForest parameters: max_depth: {max_depth}, number of trees={n_estimators}, used cpu cores={n_cores}')
     return rf
 
 
@@ -56,6 +59,7 @@ def rf_fit(rf, x_train, y_train):
     sklearn.ensemble._forest.RandomForestClassifier
         fitted RandomForest model
     """
+    print('\n##########   -   Fitting RandomForest   -   ##########')
     rf = rf
     rf_fitted = rf.fit(x_train, y_train)
 
@@ -91,6 +95,7 @@ def rf_predict(data, rf_fitted):
         Array with predicted labels
     """
     # data = data.iloc[:, 1:]
+    print('\n##########   -   Start Prediction   -   ##########')
     prediction = rf_fitted.predict(data)
 
     return prediction
@@ -136,6 +141,7 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
     numpy.ndarray
         Array with predicted labels
     """
+    print('\n##########   -   Staring parameter tuning   -   ##########')
     search_grid = {'n_estimators': [int(x) for x in np.linspace(start=min_estimator, stop=max_estimator,
                                                                 num=value_generator)],
                    'max_features': ['auto', 'sqrt'],
@@ -156,7 +162,7 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
     best_model = tune_model_grid.best_estimator_
     print(f"Best performing RandomForestModel has the following parameters: {best_model} \n")
 
-    data = data.iloc[:, 1:]
+    # data = data.iloc[:, 1:]
     best_model_pred = best_model.predict(data)
 
     return best_model_pred
