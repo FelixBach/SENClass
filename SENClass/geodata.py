@@ -8,6 +8,13 @@ import osr
 import glob
 import gdal
 import numpy as np
+from rasterio.plot import show
+import matplotlib.pyplot as plt
+from matplotlib import colors
+import rasterio
+import matplotlib as mpl
+from matplotlib.ticker import FormatStrFormatter
+import matplotlib.patches as mpatches
 
 
 def parse_folder(path, raster_ext):
@@ -217,7 +224,6 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
     Parameters
     ----------
     prediction:
-
     path: string
         Path to folder with satellite files
     out_folder_prediction: string
@@ -272,3 +278,17 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
         print(f'GTIFF created from predicted labels')
     else:
         print(f'predicted image already exists')
+
+def tif_visualize(path, out_folder_prediction, filename, raster_ext):
+    result = rasterio.open(os.path.join(path, out_folder_prediction, filename + "." + raster_ext))
+    fig, ax = plt.subplots(figsize=(6, 6))
+    cmap = mpl.colors.ListedColormap(['white','cyan', 'royalblue'])
+    white_box = mpatches.Patch(color='white', label='not flooded')
+    blue_box = mpatches.Patch(color='cyan', label='temporarily flooded')
+    red_box = mpatches.Patch(color='royalblue', label='permanently flooded')
+    ax.legend(handles=[white_box, blue_box, red_box], title='Classes', handlelength=0.7, bbox_to_anchor=(1.05, 0.45),
+              loc='lower left', borderaxespad=0.)
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+    show(result,
+         transform=result.transform, title="Classification result", ax=ax, cmap=cmap)
+    plt.show()

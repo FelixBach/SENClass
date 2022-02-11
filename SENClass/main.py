@@ -12,10 +12,9 @@ start_time = datetime.now()
 
 def main():
     #####     INPUTS     #####
-    # path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
+    path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
     # path = "C:/GEO419/test_env/s1/"
-    path = "C:/GEO419/Spain_Donana_S1-VV/"
-    # path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
+    # path = "C:/GEO419/Spain_Donana_S1-VV/"
     # path = "/home/felix/Dokumente/SENClass/test_env/10_files/"
 
     raster_ext = "tif"
@@ -23,13 +22,13 @@ def main():
     # out_folder_resampled_scenes = "test/"
     # out_folder_resampled_scenes = "S1_resamp/"
 
-    # path_ref_p = "D:/Uni/GEO419/T2/Abschlussaufgabe/"  # path to reference product
-    path_ref_p = "C:/GEO419/"  # path to reference product
+    path_ref_p = "D:/Uni/GEO419/T2/Abschlussaufgabe/"  # path to reference product
+    # path_ref_p = "C:/GEO419/"  # path to reference product
     # path_ref_p = "/home/felix/Dokumente/SENClass/test_env"
 
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected_3classs.tif"
-    # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected.tif"
-    ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_wgs.tif"
+    ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected.tif"
+    # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_wgs.tif"
     # path_ref_p = "C:/GEO419/test_env/"  # path to reference product
 
     out_folder_prediction = "results/"  # path from output folder
@@ -41,7 +40,7 @@ def main():
 
     # inputs for sample_selection.select_samples
     train_size = 0.25  # Specifies how many samples are used for training
-    sss = False  # True: using StratifiedShuffleSplit, False: using train_test_split for sampling
+    sss = True  # True: using StratifiedShuffleSplit, False: using train_test_split for sampling
 
     # random forest parameter
     max_depth = 10  # The maximum depth of the tree, default none
@@ -86,6 +85,8 @@ def main():
     AccuracyAssessment.accuracy_assessment(prediction, out_ref_p)
     geodata.prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext,
                                 mask)
+    # visualize the results
+    geodata.tif_visualize(path, out_folder_prediction, name_predicted_image, raster_ext)
 
     tuned_prediction = random_forest.rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t,
                                                          min_estimator, max_estimator, value_generator, n_iter, cv,
@@ -93,6 +94,8 @@ def main():
 
     geodata.prediction_to_gtiff(tuned_prediction, path, out_folder_prediction, name_tuned_predicted_image, out_ref_p,
                                 raster_ext, mask)
+    # visualize the results
+    geodata.tif_visualize(path, out_folder_prediction, name_tuned_predicted_image, raster_ext)
 
     AccuracyAssessment.accuracy_assessment(tuned_prediction, out_ref_p)
     # # get accuracy and other metrics
