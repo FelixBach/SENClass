@@ -1,41 +1,69 @@
 """
-random_forest.py: In the script, the random forest is created, fited to the data, and the labels are predicted.
+random_forest.py: In the script, the random forest is created, fitted to the data, and the labels are predicted.
 @author: Felix Bachmann
 """
 
 import gdal
 import numpy as np
-import warnings
 import pandas as pd
 from sklearn import ensemble as ensemble
-from sklearn.feature_selection import SelectFromModel
-from sklearn import metrics as metrics
+from sklearn.model_selection import RandomizedSearchCV
+import warnings
 
 
 warnings.simplefilter("ignore", UserWarning)
 
 
-def rf_fit(max_depth, random_state, n_estimators, n_cores, verbose, x_train, y_train):
+def rf_create(max_depth, random_state, n_estimators, n_cores, verbose):
+    """
+    The RandomForest will be created with this function.
+    Parameters
+    ----------
+    max_depth: int
+        specifies the maximum depth of the random forest
+    random_state: int
+        Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
+        multiple executions.
+    n_estimators: int
+        specifies the number of trees in the forest
+    n_cores: int
+        specifies how many cores are used to fit the model
+    verbose: int
+        shows progress in console
+    Returns
+    -------
+    sklearn.ensemble._forest.RandomForestClassifier
+        unfitted RandomForest model
+    """
+    print('####################   -   Start RandomForest classification  -   ####################')
+    print('\n##########   -   Creating RandomForest   -   ##########')
+    rf = ensemble.RandomForestClassifier(max_depth=max_depth, random_state=random_state, n_estimators=n_estimators,
+                                         n_jobs=n_cores, verbose=verbose)
+    print(f'RandomForest parameters: max_depth: {max_depth}, number of trees={n_estimators}, used cpu cores={n_cores}')
+    return rf
+
+
+def rf_fit(rf, x_train, y_train):
     """
     rf_fit will create the Random Forrest with the defined parameters and fit the model to the training data.
     Parameters
     ----------
-    max_depth
-    random_state
-    n_estimators
-    n_cores
-    verbose
-    x_train
-    y_train
+    rf: sklearn.ensemble._forest.RandomForestClassifier
+        RandomForest which will be trained
+    x_train: numpy.ndarray
+        array with training values (pixel values from satellite)
+    y_train: numpy.ndarray
+        array with training values (label values)
     Returns
     -------
     sklearn.ensemble._forest.RandomForestClassifier
+        fitted RandomForest model
     """
-    rf = ensemble.RandomForestClassifier(max_depth=max_depth, random_state=random_state, n_estimators=n_estimators,
-                                         n_jobs=n_cores, verbose=verbose)
+    print('\n##########   -   Fitting RandomForest   -   ##########')
+    rf = rf
     rf_fitted = rf.fit(x_train, y_train)
 
-    return rf, rf_fitted
+    return rf_fitted
 
 
 def rf_feature_importance(rf):
@@ -54,61 +82,87 @@ def rf_feature_importance(rf):
 
 def rf_predict(data, rf_fitted):
     """
+
     Parameters
     ----------
-    data
-    rf_fitted
+    data: pandas.core.frame.DataFrame
+
+    rf_fitted: sklearn.ensemble._forest.RandomForestClassifier
+        fitted RandomForest model
     Returns
     -------
     numpy.ndarray
+        Array with predicted labels
     """
     # data = data.iloc[:, 1:]
+    print('\n##########   -   Start Prediction   -   ##########')
     prediction = rf_fitted.predict(data)
 
     return prediction
 
 
-def rf_feature_selection(rf, x_train, y_train, prediction, out_ref_p, data):
+def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_estimator, max_estimator, value_generator,
+                        n_iter, cv, random_state, n_cores):
     """
-        Select important features and calculate new RF model
-        Parameters
-        ----------
-        rf: sklearn.RandomForestClassifier object
-            Random Forest Model the selection is based on
-        x_train: list
-            training values dataset
-        y_train: list
-            training labels dataset
-        x_test: list
-            test values dataset
-        Examples
-        --------
-        >>> x_important_train, x_important_test =
-            selectImportantFeatures(base_model, x_train, y_train, x_test)
-        Returns
-        -------
-        list
-            new training datasets containing only values for selected features
-        """
-    sel = SelectFromModel(rf)
-    sel.fit(x_train, y_train)
-    x_train = pd.DataFrame(x_train)
-    selected_feat = x_train.columns[(sel.get_support())]
-    print(str(len(selected_feat)) + " features selected")
-    print(selected_feat)
-    x_important_train = sel.transform(x_train)
+    The function searches for the best RandomForest parameters and will later fit the best performing model and create
+    the prediction.
+    Parameters
+    ----------
+    x_train: numpy.ndarray
+        array with training values (pixel values from satellite)
+    y_train: numpy.ndarray
+        array with training values (label values)
+    data: pandas.core.frame.DataFrame
+        Values to apply the prediction to
+    min_depth_t: int
+        minimum depth of the random forest
+    max_depth_t: int
+        maximum depth of the random forest
+    min_estimator: int
+        specifies the minimum number of trees in the forest
+    max_estimator:  int
+        specifies the maximum number of trees in the forest
+    value_generator: int
+        Generates example values for hyper tuning. As an example, the value of min_estimator is set to 10 and
+        max_estimator is set to 20. If value_generator is set to 2, RandomForests are created that have, for example,
+        12 or 14 n_estimator. If the value of value_generator is set to 5, RandomForests are created that have, for
+        example, 11,12,14,17 and 18 n_estiamtors.
+    n_iter: int
+        Number of parameter settings that are sampled.
+    cv: int
+        number of folds of cross validation
+    random_state: int
+        Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
+        multiple executions.
+    n_cores: int
+        specifies how many cores are used to fit the model
+    Returns
+    -------
+    numpy.ndarray
+        Array with predicted labels
+    """
+    print('\n##########   -   Staring parameter tuning   -   ##########')
+    search_grid = {'n_estimators': [int(x) for x in np.linspace(start=min_estimator, stop=max_estimator,
+                                                                num=value_generator)],
+                   'max_features': ['auto', 'sqrt'],
+                   'max_depth': [int(x) for x in np.linspace(start=min_depth_t, stop=max_depth_t,
+                                                             num=value_generator)]}
 
-    rf = ensemble.RandomForestClassifier(max_depth=2, random_state=0, n_estimators=3,
-                                         n_jobs=-1, verbose=2)
-    rf_fitted = rf.fit(x_important_train, y_train)
+    tune_model = ensemble.RandomForestClassifier()
+    tune_model_grid = RandomizedSearchCV(
+        estimator=tune_model,
+        param_distributions=search_grid,
+        n_iter=n_iter,
+        cv=cv,
+        verbose=2,
+        random_state=random_state,
+        n_jobs=n_cores)
 
-    data = data.iloc[:, 1:]
-    prediction = rf_fitted.predict(data)
+    tune_model_grid.fit(x_train, y_train)
+    best_model = tune_model_grid.best_estimator_
+    print(f"Best performing RandomForestModel has the following parameters: {best_model} \n")
 
+    # data = data.iloc[:, 1:]
+    best_model_pred = best_model.predict(data)
 
-    ref_p = gdal.Open(out_ref_p)
-    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
-    ref_p = ref_p.flatten()
-    acc = metrics.accuracy_score(ref_p, prediction)
-    res = f'Overall accuracy is {acc}'
-    print(res)
+    return best_model_pred

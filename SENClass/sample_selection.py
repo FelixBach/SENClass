@@ -44,11 +44,14 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
     list
         lists containing the test and training samples for the random forest algorithm.
     """
+    print('\n####################   -   Start sample selection   -   ####################')
     global x_train, x_test, y_train, y_test
 
     res_path = os.path.join(path, out_folder_resampled_scenes)
     raster_file_list, raster_file_name = geodata.parse_folder(res_path, raster_ext)
-    print(f'folder contains {len(raster_file_list)} resampled raster files \n')
+    print(f'{res_path} contains {len(raster_file_list)} resampled raster files \n')
+
+    print('\n##########   -   Preparing data   -   ##########')
 
     len_ras_li = len(raster_file_list)  # number of satellite images
 
@@ -82,7 +85,7 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
     print(f"Removing -99 and NaN-values from data frame")
 
     if sss:
-        print(f"Using StratifiedShuffleSplit for sample selection")
+        print('\n##########   -   Using StratifiedShuffleSplit from sklearn.model_selection  -   ##########')
         row_count = df2.shape[1]  # get max rows from data frame
         x = df2.iloc[:, 1:row_count].values
         y = df2.iloc[:, 0].values
@@ -95,7 +98,7 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
         return x_train, x_test, y_train, y_test, data, mask
 
     else:
-        print(f"Using train_test_split sample selection")
+        print('\n##########   -   Using train_test_split from sklearn.model_selection   -   ##########')
         row_count = df2.shape[1]  # get max rows from data frame
 
         x = df2.iloc[:, 1:row_count].values

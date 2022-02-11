@@ -14,9 +14,9 @@ def main():
     #####     INPUTS     #####
     # path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
     # path = "C:/GEO419/test_env/s1/"
+    path = "C:/GEO419/Spain_Donana_S1-VV/"
     # path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
-    path = "/home/felix/Dokumente/SENClass/test_env/10_files/"
-    # path = "C:/GEO419/test_env/s1/"
+    # path = "/home/felix/Dokumente/SENClass/test_env/10_files/"
 
     raster_ext = "tif"
     out_folder_resampled_scenes = "resamp/"
@@ -24,8 +24,8 @@ def main():
     # out_folder_resampled_scenes = "S1_resamp/"
 
     # path_ref_p = "D:/Uni/GEO419/T2/Abschlussaufgabe/"  # path to reference product
-    # path_ref_p = "C:/GEO419/test_env/"  # path to reference product
-    path_ref_p = "/home/felix/Dokumente/SENClass/test_env"
+    path_ref_p = "C:/GEO419/"  # path to reference product
+    # path_ref_p = "/home/felix/Dokumente/SENClass/test_env"
 
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected_3classs.tif"
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected.tif"
@@ -34,6 +34,7 @@ def main():
 
     out_folder_prediction = "results/"  # path from output folder
     name_predicted_image = "base_prediction_nd_0"
+    name_tuned_predicted_image = "tune_prediction_nd_0"
 
     # random_state = np.random.randint(low=0, high=43)  # random value for sample selection and random forest
     random_state = 0
@@ -43,8 +44,8 @@ def main():
     sss = False  # True: using StratifiedShuffleSplit, False: using train_test_split for sampling
 
     # random forest parameter
-    max_depth = 2  # The maximum depth of the tree, default none
-    n_estimator = 2  # The number of trees in the forest, default 100
+    max_depth = 10  # The maximum depth of the tree, default none
+    n_estimator = 10  # The number of trees in the forest, default 100
     n_cores = -1  # defines number of cores to use, if -1 all cores are used
     verbose = 1  # shows output from random forrest in console
 
@@ -52,15 +53,15 @@ def main():
     min_depth_t = 3
     max_depth_t = 10
     min_estimator = 10  # minimum number of estimators
-    max_estimator = 100  # maximum number of estimators
+    max_estimator = 50  # maximum number of estimators
     value_generator = 5  # Number of values to generate
-    n_iter = 10  # Number of parameter settings that are sampled
+    n_iter = 5  # Number of parameter settings that are sampled
     cv = 5  # number of folds of cross validation
 
     #####     FUNCTIONS     #####
     # reprojecting and reclassifying raster data
     out_ref_p = geodata.reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_scenes)
-    geodata.reclass_raster(out_ref_p)
+    # geodata.reclass_raster(out_ref_p)
 
     # select samples from scene(s)
     x_train, x_test, y_train, y_test, data, mask = sample_selection.select_samples(path, path_ref_p, out_ref_p,
@@ -78,12 +79,11 @@ def main():
 
     prediction = random_forest.rf_predict(data, rf_fitted)
 
-    print("Acc for base model")
-    AccuracyAssessment.accuracy(prediction, out_ref_p)  # get overall accuracy
-    base_matrix = AccuracyAssessment.get_confusion_matrix(prediction, out_ref_p)  # get confusion matrix
-    AccuracyAssessment.plot_confusion_matrix(base_matrix)  # heatmap of Confusion Matrix
-    AccuracyAssessment.get_kappa(base_matrix)
-
+    # AccuracyAssessment.accuracy(prediction, out_ref_p)  # get overall accuracy
+    # base_matrix, cf_matrix_pd = AccuracyAssessment.get_confusion_matrix(prediction, out_ref_p)  # get confusion matrix
+    # AccuracyAssessment.plot_confusion_matrix(base_matrix)  # heatmap of Confusion Matrix
+    # AccuracyAssessment.get_kappa(base_matrix)
+    AccuracyAssessment.accuracy_assessment(prediction, out_ref_p)
     geodata.prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext,
                                 mask)
 
@@ -91,20 +91,20 @@ def main():
                                                          min_estimator, max_estimator, value_generator, n_iter, cv,
                                                          random_state, n_cores)
 
-    geodata.prediction_to_gtiff(tuned_prediction, path, out_folder_prediction, name_predicted_image, out_ref_p,
+    geodata.prediction_to_gtiff(tuned_prediction, path, out_folder_prediction, name_tuned_predicted_image, out_ref_p,
                                 raster_ext, mask)
 
-    print("Acc for tuned model")
-    # get accuracy and other metrics
-    AccuracyAssessment.accuracy(tuned_prediction, out_ref_p)  # get overall accuracy
-    tuned_matrix = AccuracyAssessment.get_confusion_matrix(tuned_prediction, out_ref_p)  # get confusion matrix
-    AccuracyAssessment.plot_confusion_matrix(tuned_matrix)  # heatmap of Confusion Matrix
-    AccuracyAssessment.get_kappa(tuned_matrix)  # get Cappa Coefficient
+    AccuracyAssessment.accuracy_assessment(tuned_prediction, out_ref_p)
+    # # get accuracy and other metrics
+    # AccuracyAssessment.accuracy(tuned_prediction, out_ref_p)  # get overall accuracy
+    # tuned_matrix = AccuracyAssessment.get_confusion_matrix(tuned_prediction, out_ref_p)  # get confusion matrix
+    # AccuracyAssessment.plot_confusion_matrix(tuned_matrix)  # heatmap of Confusion Matrix
+    # AccuracyAssessment.get_kappa(tuned_matrix)  # get Cappa Coefficient
 
     end_time = datetime.now()
     print(f"\n end-time =", end_time - start_time, "Hr:min:sec \n")
 
-    plt.show()
+    # plt.show()
 
 
 # main func
