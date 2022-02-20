@@ -8,13 +8,13 @@ import osr
 import glob
 import gdal
 import numpy as np
+import rasterio
 from rasterio.plot import show
 import matplotlib.pyplot as plt
-from matplotlib import colors
-import rasterio
 import matplotlib as mpl
-from matplotlib.ticker import FormatStrFormatter
+from matplotlib import colors
 import matplotlib.patches as mpatches
+from matplotlib.ticker import FormatStrFormatter
 
 
 def parse_folder(path, raster_ext):
@@ -46,18 +46,19 @@ def parse_folder(path, raster_ext):
 
 def open_raster_gdal(path, file_name):
     """
-    The function opens raster files from folder/raster_file_list
+    The function opens raster files from folder or raster_file_list
     Parameters
     ----------
     path: string
         Path to folder with raster files
-    file_name:
-        name of a raster file or name from a list
+    file_name: string
+        name of a raster file or file from a raster_file_list
     Examples
     --------
     Returns
     -------
     Gdal file object
+
     """
 
     file_name = os.path.join(path, file_name)
@@ -73,7 +74,7 @@ def write_file_gdal(gdal_file, out_file):
     ----------
     gdal_file: GDAL file object
         File object containing the data to be written to disk
-    out_file: str
+    out_file: string
         Path and raster name for the new file
     Examples
     --------
@@ -97,37 +98,47 @@ def write_file_gdal(gdal_file, out_file):
     out_file.FlushCache()  # save from memory to disk
 
 
-def reclass_raster(out_ref_p):
+def reclass_raster(raster_value, class_value, out_ref_p):
     """
-        The reference product values are divided into new classes.
+    The reference product values are divided into new classes. For that a simple reclassification approach is used. To
+    assign new classes, the smallest value in list class_value has to bei higher than the highest value in the
+    raster_value list. Otherwise, the reclassification will be wrong. It's also important that both lists have the same
+    length. As user, you have to know the class values of your product.
     Parameters
     ----------
+    raster_value: list
+        list that contains the raster values as class limits
+    class_value: list
+        list with new class values
     out_ref_p: string
         path to resampled/reclassified reference product
     Returns
     -------
     """
     print('\n##########   -   Reclassifying data   -   ##########')
-    ref_p = gdal.Open(out_ref_p)
+    if len(raster_value) == len(class_value):
+        ref_p = gdal.Open(out_ref_p)
 
-    gt = ref_p.GetGeoTransform()
-    prj = ref_p.GetProjection()
-    srs = osr.SpatialReference(wkt=prj)
+        gt = ref_p.GetGeoTransform()
+        prj = ref_p.GetProjection()
+        srs = osr.SpatialReference(wkt=prj)
 
-    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
-    ref_p = np.where(ref_p <= 0, 100, ref_p)
-    ref_p = np.where(ref_p <= 11, 200, ref_p)  # description on google drive
-    ref_p = np.where(ref_p <= 12, 300, ref_p)  # description on google drive
+        ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+        for i, value in enumerate(raster_value):
+            ref_p = np.where(ref_p <= raster_value[i], class_value[i], ref_p)
 
-    driver = gdal.GetDriverByName('GTIFF')
-    rows, cols = ref_p.shape
-    out_ds = driver.Create(out_ref_p, cols, rows, 1, gdal.GDT_UInt16)
-    out_ds.GetRasterBand(1).WriteArray(ref_p)
-    out_ds.SetGeoTransform(gt)
-    out_ds.SetProjection(srs.ExportToWkt())
-    out_ds = None
-
-    print(f'reclassified reference product')
+        driver = gdal.GetDriverByName('GTIFF')
+        rows, cols = ref_p.shape
+        out_ds = driver.Create(out_ref_p, cols, rows, 1, gdal.GDT_UInt16)
+        out_ds.GetRasterBand(1).WriteArray(ref_p)
+        out_ds.SetGeoTransform(gt)
+        out_ds.SetProjection(srs.ExportToWkt())
+        out_ds = None
+        print(f'reclassified reference product')
+    else:
+        print(f'list raster_value and class_value do not have the same length. No reclassification possible. Continue '
+              f'with sample selection.')
+        pass
 
 
 def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resampled_scenes):
@@ -136,13 +147,13 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
     images are not reprojected, but the pixel size is adjusted to that of the reference product.
     ----------
     path: string
-        Path to folder with satellite files
+        Path to folder with raster files
     path_ref_p: string
         Path to the ref_p file (tif-format)
     ref_p_name: string
         list with paths to satellite files
     raster_ext: string
-        extension from raster files
+        specifies raster format
     out_folder_resampled_scenes: string
         path for the output folder with the resampled scenes
     Returns
@@ -167,11 +178,10 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
     gt_s1 = s1.GetGeoTransform()
     pix_size_s1 = gt_s1[1]
 
-    gt = s1.GetGeoTransform()
-    minx = gt[0]
-    maxy = gt[3]
-    maxx = minx + gt[1] * s1.RasterXSize
-    miny = maxy + gt[5] * s1.RasterYSize
+    minx = gt_s1[0]
+    maxy = gt_s1[3]
+    maxx = minx + gt_s1[1] * s1.RasterXSize
+    miny = maxy + gt_s1[5] * s1.RasterYSize
 
     ref_p_res = gdal.Warp('', ref_p, format='VRT', dstSRS='EPSG:{}'.format(epsg_s1), outputType=gdal.GDT_Int16,
                           outputBounds=[minx, miny, maxx, maxy])
@@ -205,7 +215,7 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
         s1_res = gdal.Warp('', s1, format='VRT', xRes=psize_ref_p, yRes=psize_ref_p,
                            outputType=gdal.GDT_Float32, outputBounds=[minx, miny, maxx, maxy])
 
-        file_name = raster_file_name[i] + str("_resampled.tif")
+        file_name = raster_file_name[i][:-4] + str("_resampled.tif")
         file_check = os.path.join(out_folder, file_name)
         if not os.path.isfile(file_check):
             out_file = os.path.join(out_folder, file_name)
@@ -220,20 +230,21 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
 
 def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext, mask):
     """
-        The function writes the predicted array to a GTIFF file.
+    The function writes the predicted array to a GTIFF file.
     Parameters
     ----------
     prediction:
     path: string
-        Path to folder with satellite files
+        Path to folder with raster files
     out_folder_prediction: string
         Name for the output folder for the predicted image
     name_predicted_image: string
         Name of the predicted image
     out_ref_p: string
-        Path to reprojected/reclassified reference product
+        path to resampled/reclassified reference product
     raster_ext: string
-        extension from raster files    Returns
+        specifies raster format
+    Returns
     -------
     """
     # create name for output folder
@@ -279,10 +290,24 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
     else:
         print(f'predicted image already exists')
 
+
 def tif_visualize(path, out_folder_prediction, filename, raster_ext):
+    """
+    Visualizes the result as image
+    Parameters
+    ----------
+    path: string
+        Path to folder with raster files
+    out_folder_prediction: string
+
+    filename: string
+
+    raster_ext: string
+        specifies raster format
+    """
     result = rasterio.open(os.path.join(path, out_folder_prediction, filename + "." + raster_ext))
     fig, ax = plt.subplots(figsize=(6, 6))
-    cmap = mpl.colors.ListedColormap(['white','cyan', 'royalblue'])
+    cmap = mpl.colors.ListedColormap(['white', 'cyan', 'royalblue'])
     white_box = mpatches.Patch(color='white', label='not flooded')
     blue_box = mpatches.Patch(color='cyan', label='temporarily flooded')
     red_box = mpatches.Patch(color='royalblue', label='permanently flooded')

@@ -82,7 +82,7 @@ def rf_feature_importance(rf):
 
 def rf_predict(data, rf_fitted):
     """
-
+    Performs the prediction and returning the array with predicted labels
     Parameters
     ----------
     data: pandas.core.frame.DataFrame
@@ -94,7 +94,6 @@ def rf_predict(data, rf_fitted):
     numpy.ndarray
         Array with predicted labels
     """
-    # data = data.iloc[:, 1:]
     print('\n##########   -   Start Prediction   -   ##########')
     prediction = rf_fitted.predict(data)
 
@@ -102,7 +101,7 @@ def rf_predict(data, rf_fitted):
 
 
 def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_estimator, max_estimator, value_generator,
-                        n_iter, cv, random_state, n_cores):
+                        n_iter, random_state, n_cores):
     """
     The function searches for the best RandomForest parameters and will later fit the best performing model and create
     the prediction.
@@ -129,8 +128,6 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
         example, 11,12,14,17 and 18 n_estiamtors.
     n_iter: int
         Number of parameter settings that are sampled.
-    cv: int
-        number of folds of cross validation
     random_state: int
         Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
         multiple executions.
@@ -153,7 +150,7 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
         estimator=tune_model,
         param_distributions=search_grid,
         n_iter=n_iter,
-        cv=cv,
+        cv=5,
         verbose=2,
         random_state=random_state,
         n_jobs=n_cores)
