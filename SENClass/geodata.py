@@ -1,5 +1,5 @@
 """
-geodata.py: contains functions to process the geodata
+geodata.py: contains functions to process geodata
 @author: Felix Bachmann
 """
 
@@ -8,6 +8,7 @@ import osr
 import glob
 import gdal
 import numpy as np
+import pandas as pd
 import rasterio
 from rasterio.plot import show
 import matplotlib.pyplot as plt
@@ -15,23 +16,26 @@ import matplotlib as mpl
 from matplotlib import colors
 import matplotlib.patches as mpatches
 from matplotlib.ticker import FormatStrFormatter
+from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
 
 
 def parse_folder(path, raster_ext):
     """
     Returns a list with all raster files in a folder
+
     Parameters
     ----------
     path: string
         Path to folder with raster files
     raster_ext: string
         specifies raster format
-    Examples
-    --------
+
     Returns
     -------
-    list
-        list of all raster files and raster names in a folder
+    raster_file_list: list
+        list of all raster files in a folder
+    raster_file_name: list
+        list of all raster names in a folder
     """
     print('\n##########   -   Searching for files   -   ##########')
     raster_file_list = []
@@ -47,18 +51,18 @@ def parse_folder(path, raster_ext):
 def open_raster_gdal(path, file_name):
     """
     The function opens raster files from folder or raster_file_list
+
     Parameters
     ----------
     path: string
         Path to folder with raster files
     file_name: string
         name of a raster file or file from a raster_file_list
-    Examples
-    --------
+
     Returns
     -------
-    Gdal file object
-
+    gdal_file: Gdal file object
+        Raster file that can be read as array with numpy
     """
 
     file_name = os.path.join(path, file_name)
@@ -70,16 +74,17 @@ def open_raster_gdal(path, file_name):
 def write_file_gdal(gdal_file, out_file):
     """
     Saves gdal files to disk.
+
     Parameters
     ----------
     gdal_file: GDAL file object
         File object containing the data to be written to disk
     out_file: string
         Path and raster name for the new file
-    Examples
-    --------
+
     Returns
     -------
+    This function has no return
     """
     driver = gdal.GetDriverByName('GTIFF')
     cols = gdal_file.RasterYSize
@@ -104,6 +109,7 @@ def reclass_raster(raster_value, class_value, out_ref_p):
     assign new classes, the smallest value in list class_value has to bei higher than the highest value in the
     raster_value list. Otherwise, the reclassification will be wrong. It's also important that both lists have the same
     length. As user, you have to know the class values of your product.
+
     Parameters
     ----------
     raster_value: list
@@ -112,11 +118,13 @@ def reclass_raster(raster_value, class_value, out_ref_p):
         list with new class values
     out_ref_p: string
         path to resampled/reclassified reference product
+
     Returns
     -------
+    This function has no return
     """
     print('\n##########   -   Reclassifying data   -   ##########')
-    if len(raster_value) == len(class_value):
+    if len(class_value) == len(raster_value):
         ref_p = gdal.Open(out_ref_p)
 
         gt = ref_p.GetGeoTransform()
@@ -145,6 +153,8 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
     """
     The raster used as reference product is projected into the coordinate system of the satellite images. The satellite
     images are not reprojected, but the pixel size is adjusted to that of the reference product.
+
+    Parameters
     ----------
     path: string
         Path to folder with raster files
@@ -156,8 +166,10 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
         specifies raster format
     out_folder_resampled_scenes: string
         path for the output folder with the resampled scenes
+
     Returns
     -------
+    This function has no return
     """
     print('\n####################   -   Preparing the Geodata   -   ####################')
     # search for files in input folder
@@ -231,9 +243,11 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
 def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext, mask):
     """
     The function writes the predicted array to a GTIFF file.
+
     Parameters
     ----------
-    prediction:
+    prediction: numpy.ndarray
+        Numpy-Array with the predicted labels
     path: string
         Path to folder with raster files
     out_folder_prediction: string
@@ -244,8 +258,12 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
         path to resampled/reclassified reference product
     raster_ext: string
         specifies raster format
+    mask: numpy.ndarray
+        array to mask -99 values
+
     Returns
     -------
+    This function has no return
     """
     # create name for output folder
     out_folder = os.path.join(path, out_folder_prediction)
@@ -293,17 +311,22 @@ def prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_
 
 def tif_visualize(path, out_folder_prediction, filename, raster_ext):
     """
-    Visualizes the result as image
+    Visualizes the result as image. The function only visualizes thr result from the water seasonality product.
+
     Parameters
     ----------
     path: string
         Path to folder with raster files
     out_folder_prediction: string
-
+       Path to the folder where the prediction should be saved
     filename: string
-
+        Name from the file that is stored
     raster_ext: string
         specifies raster format
+
+    Returns
+    -------
+    This function has no return
     """
     result = rasterio.open(os.path.join(path, out_folder_prediction, filename + "." + raster_ext))
     fig, ax = plt.subplots(figsize=(6, 6))
@@ -317,3 +340,110 @@ def tif_visualize(path, out_folder_prediction, filename, raster_ext):
     show(result,
          transform=result.transform, title="Classification result", ax=ax, cmap=cmap)
     plt.show()
+
+
+def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, raster_ext, train_size, random_state,
+                   sss):
+    """
+    The function select samples for training and testing. The user has the choice between two methods to select the
+    test and training pixels. If strat is set to true, the pixels and labels are selected using the sklearn algorithm
+    StratifiedShuffleSplit. Otherwise, the pixels and labels are randomly selected from the data frame using the
+    sklearn algorithm train_test_split.
+
+    Parameters
+    ----------
+    path_ref_p: string
+        path to reference file (mask file)
+    out_ref_p: string
+        name of reference file
+    path: string
+        path to satellite images
+    out_folder_resampled_scenes: string
+        path to resampled satellite images
+    raster_ext: string
+        extension from raster files
+    train_size: string
+        size of the test
+    random_state: int
+        Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
+        multiple executions.
+    sss: bool
+        If True, sk-learn function StratifiedRandomSampling is used to select the samples. If sss is false, sk-learn
+        uses train_test_split to select the samples.
+
+    Returns
+    -------
+    x_train: list
+        list containing the training samples from the satellite images for the random forest algorithm.
+    y_train: list
+        list containing the training samples from the reference product for the random forest algorithm.
+    data: pandas.core.frame.DataFrame
+        data on which the prediction is executed
+    mask: numpy.ndarray
+        array to mask -99 values
+    """
+    print('\n####################   -   Start sample selection   -   ####################')
+    global x_train, x_test, y_train, y_test
+
+    res_path = os.path.join(path, out_folder_resampled_scenes)
+    raster_file_list, raster_file_name = parse_folder(res_path, raster_ext)
+    print(f'{res_path} contains {len(raster_file_list)} resampled raster files \n')
+
+    print('\n##########   -   Preparing data   -   ##########')
+
+    len_ras_li = len(raster_file_list)  # number of satellite images
+
+    ref_p = open_raster_gdal(path_ref_p, out_ref_p)
+    ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
+
+    print(f"Creating data frame with labels and pixel values from satellite images")
+
+    df = pd.DataFrame()
+    labels = pd.Series(np.array(ref_p[:]).flat)  # read the class labels
+    df['Label_nr'] = labels
+
+    for i in range(len_ras_li):
+        file = gdal.Open(raster_file_list[i])
+        file = np.array(file.GetRasterBand(1).ReadAsArray())
+        file = file.flatten()
+        layer = pd.Series(np.array(file).flat)
+        df['file_{}'.format(i)] = layer
+
+    # create an edge mask with NaN values
+    raster = gdal.Open(raster_file_list[1])
+    raster = np.array(raster.GetRasterBand(1).ReadAsArray())
+    raster[raster == -99] = np.nan
+    mask = np.isnan(raster)
+
+    data = df
+    data = data.iloc[:, 1:]
+    df2 = df[df != -99]  # remove all -99 values from data frame
+    df2 = df2.dropna()  # remove all NaN values from data frame
+
+    print(f"Removing -99 and NaN-values from data frame")
+
+    if sss:
+        print('\n##########   -   Using StratifiedShuffleSplit from sklearn.model_selection  -   ##########')
+        row_count = df2.shape[1]  # get max rows from data frame
+        x = df2.iloc[:, 1:row_count].values
+        y = df2.iloc[:, 0].values
+        sss = StratifiedShuffleSplit(n_splits=10, train_size=train_size, random_state=random_state)
+        for train_index, test_index in sss.split(x, y):
+            x_train, x_test = x[train_index], x[test_index]
+            y_train, y_test = y[train_index], y[test_index]
+
+        print(f"{len(x_train)} pixels used for training \n")
+        return x_train, x_test, y_train, y_test, data, mask
+
+    else:
+        print('\n##########   -   Using train_test_split from sklearn.model_selection   -   ##########')
+        row_count = df2.shape[1]  # get max rows from data frame
+
+        x = df2.iloc[:, 1:row_count].values
+        y = df2.iloc[:, 0].values
+        x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=train_size, random_state=random_state,
+                                                            stratify=y)
+
+        print(f"{len(x_train)} pixels used for training \n")
+
+        return x_train, y_train, data, mask

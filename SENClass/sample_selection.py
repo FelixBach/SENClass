@@ -18,10 +18,12 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
     test and training pixels. If strat is set to true, the pixels and labels are selected using the sklearn algorithm
     StratifiedShuffleSplit. Otherwise, the pixels and labels are randomly selected from the data frame using the
     sklearn algorithm train_test_split.
+
+    Parameters
     ----------
     path_ref_p: string
         path to reference file (mask file)
-    ref_p_name: string
+    out_ref_p: string
         name of reference file
     path: string
         path to satellite images
@@ -34,11 +36,10 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
     random_state: int
         Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
         multiple executions.
-    strat: bool
-        If True, then stratified random sampling is performed. If strat is set to False, then a random sampling is
-        performed.
-    Examples
-    --------
+    sss: bool
+        If True, sk-learn function StratifiedRandomSampling is used to select the samples. If sss is false, sk-learn
+        uses train_test_split to select the samples.
+
     Returns
     -------
     list

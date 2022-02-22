@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import geodata
 import sample_selection
 import random_forest
-import AccuracyAssessment
+import accuracy_assessment
 import pca
 
 start_time = datetime.now()
@@ -14,8 +14,8 @@ def main():
     #####     INPUTS     #####
     # path = "D:/Uni/GEO419/T2/Abschlussaufgabe/Spain_Donana_S1-VV/"
     # path = "C:/GEO419/test_env/s1/"
-    # path = "C:/GEO419/Spain_Donana_S1-VV/"
-    path = "/home/felix/Dokumente/SENClass/test_env/10_files/"
+    path = "C:/GEO419/Spain_Donana_S1-VV/"
+    # path = "/home/felix/Dokumente/SENClass/test_env/10_files/"
 
     raster_ext = "tif"
     out_folder_resampled_scenes = "resamp/"
@@ -23,8 +23,8 @@ def main():
     # out_folder_resampled_scenes = "S1_resamp/"
 
     # path_ref_p = "D:/Uni/GEO419/T2/Abschlussaufgabe/"  # path to reference product
-    # path_ref_p = "C:/GEO419/"  # path to reference product
-    path_ref_p = "/home/felix/Dokumente/SENClass/test_env"
+    path_ref_p = "C:/GEO419/"  # path to reference product
+    # path_ref_p = "/home/felix/Dokumente/SENClass/test_env"
 
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected_3classs.tif"
     # ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_reprojected_reprojected.tif"
@@ -43,7 +43,7 @@ def main():
     random_state = 0
 
     # inputs for sample_selection.select_samples
-    train_size = 100  # Specifies how many samples are used for training
+    train_size = 0.25   # Specifies how many samples are used for training
     sss = False  # True: using StratifiedShuffleSplit, False: using train_test_split for sampling
 
     # pca
@@ -70,10 +70,12 @@ def main():
     geodata.reclass_raster(raster_value, class_value, out_ref_p)
 
     # select samples from scene(s)
-    x_train, x_test, y_train, y_test, data, mask = sample_selection.select_samples(path, path_ref_p, out_ref_p,
-                                                                                   out_folder_resampled_scenes,
-                                                                                   raster_ext,
-                                                                                   train_size, random_state, sss)
+    # x_train, x_test, y_train, y_test, data, mask = sample_selection.select_samples(path, path_ref_p, out_ref_p,
+    #                                                                                out_folder_resampled_scenes,
+    #                                                                                raster_ext, train_size, random_state,
+    #                                                                                sss)
+    x_train, y_train, data, mask = geodata.select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes,
+                                                          raster_ext, train_size, random_state, sss)
     # implement PCA Transformation
     # data, x_train = pca.principal(data, x_train, n_components)
 
@@ -87,11 +89,11 @@ def main():
     prediction = random_forest.rf_predict(data, rf_fitted)
 
     # calculate Accuracy
-    AccuracyAssessment.accuracy_assessment(prediction, out_ref_p)
+    accuracy_assessment.accuracy_assessment(prediction, out_ref_p)
     geodata.prediction_to_gtiff(prediction, path, out_folder_prediction, name_predicted_image, out_ref_p, raster_ext,
                                 mask)
     # visualize the results
-    geodata.tif_visualize(path, out_folder_prediction, name_predicted_image, raster_ext)
+    # geodata.tif_visualize(path, out_folder_prediction, name_predicted_image, raster_ext)
 
     # parameter tuning
     # tuned_prediction = random_forest.rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t,

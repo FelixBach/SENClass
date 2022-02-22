@@ -17,6 +17,7 @@ warnings.simplefilter("ignore", UserWarning)
 def rf_create(max_depth, random_state, n_estimators, n_cores, verbose):
     """
     The RandomForest will be created with this function.
+
     Parameters
     ----------
     max_depth: int
@@ -30,9 +31,10 @@ def rf_create(max_depth, random_state, n_estimators, n_cores, verbose):
         specifies how many cores are used to fit the model
     verbose: int
         shows progress in console
+
     Returns
     -------
-    sklearn.ensemble._forest.RandomForestClassifier
+    rf: sklearn.ensemble._forest.RandomForestClassifier
         unfitted RandomForest model
     """
     print('####################   -   Start RandomForest classification  -   ####################')
@@ -46,6 +48,7 @@ def rf_create(max_depth, random_state, n_estimators, n_cores, verbose):
 def rf_fit(rf, x_train, y_train):
     """
     rf_fit will create the Random Forrest with the defined parameters and fit the model to the training data.
+
     Parameters
     ----------
     rf: sklearn.ensemble._forest.RandomForestClassifier
@@ -54,9 +57,10 @@ def rf_fit(rf, x_train, y_train):
         array with training values (pixel values from satellite)
     y_train: numpy.ndarray
         array with training values (label values)
+
     Returns
     -------
-    sklearn.ensemble._forest.RandomForestClassifier
+    rf_fitted: sklearn.ensemble._forest.RandomForestClassifier
         fitted RandomForest model
     """
     print('\n##########   -   Fitting RandomForest   -   ##########')
@@ -66,32 +70,20 @@ def rf_fit(rf, x_train, y_train):
     return rf_fitted
 
 
-def rf_feature_importance(rf):
-    """
-    Parameters
-    ----------
-    rf
-    Returns
-    -------
-    numpy.ndarray
-    """
-    feature_importance = rf.feature_importances_
-
-    return feature_importance
-
-
 def rf_predict(data, rf_fitted):
     """
-    Performs the prediction and returning the array with predicted labels
+    Performs the prediction and returning the array with predicted labels.
+
     Parameters
     ----------
     data: pandas.core.frame.DataFrame
-
+        data on which the prediction is executed
     rf_fitted: sklearn.ensemble._forest.RandomForestClassifier
         fitted RandomForest model
+
     Returns
     -------
-    numpy.ndarray
+    prediction: numpy.ndarray
         Array with predicted labels
     """
     print('\n##########   -   Start Prediction   -   ##########')
@@ -105,6 +97,7 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
     """
     The function searches for the best RandomForest parameters and will later fit the best performing model and create
     the prediction.
+
     Parameters
     ----------
     x_train: numpy.ndarray
@@ -122,7 +115,7 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
     max_estimator:  int
         specifies the maximum number of trees in the forest
     value_generator: int
-        Generates example values for hyper tuning. As an example, the value of min_estimator is set to 10 and
+        Generates example values for hyper parameter tuning. As an example, the value of min_estimator is set to 10 and
         max_estimator is set to 20. If value_generator is set to 2, RandomForests are created that have, for example,
         12 or 14 n_estimator. If the value of value_generator is set to 5, RandomForests are created that have, for
         example, 11,12,14,17 and 18 n_estiamtors.
@@ -132,10 +125,11 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
         Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
         multiple executions.
     n_cores: int
-        specifies how many cores are used to fit the model
+        specifies how many CPU cores are used to fit the model
+
     Returns
     -------
-    numpy.ndarray
+    prediction: numpy.ndarray
         Array with predicted labels
     """
     print('\n##########   -   Staring parameter tuning   -   ##########')
@@ -159,7 +153,6 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
     best_model = tune_model_grid.best_estimator_
     print(f"Best performing RandomForestModel has the following parameters: {best_model} \n")
 
-    # data = data.iloc[:, 1:]
     best_model_pred = best_model.predict(data)
 
     return best_model_pred
