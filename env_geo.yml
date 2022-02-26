@@ -107,5 +107,6 @@ dependencies:
   - xz=5.2.5=h62dcd97_0
   - zlib=1.2.11=h8cc25b3_4
   - zstd=1.4.9=h19a0ad4_0
-  - enum34==1.1.10
-  - pandas-ml==0.6.1
+  - pip:
+    - enum34==1.1.10
+    - pandas-ml==0.6.1
