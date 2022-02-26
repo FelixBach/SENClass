@@ -10,10 +10,10 @@ Change in the anaconda prompt the directory to the unziped folder with .yml-file
 After that you can copy these commands in the anaconda prompt. You have only to adjust the path to the notebook
 ```
 conda env create -f env_geo.yml
-conda activate python37_ipybn
+conda activate python_senclass
 pip install git+https://github.com/FelixBach/SENClass.git
 pip install jupyter notebook
-python -m ipykernel install --user --name python37_ipybn --display-name "senclass-env"
+python -m ipykernel install --user --name python_senclass --display-name "senclass-env"
 cd “path/with/notebook”
 jupyter trust SENClass.ipynb
 jupyter notebook SENClass.ipynb
