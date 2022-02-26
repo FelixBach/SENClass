@@ -1,4 +1,4 @@
-# GEO - Processing of Sentinel-1 data
+# SENClass - Processing of Sentinel-1 data
 
 ## Installation 
 
