@@ -33,6 +33,7 @@ jupyter trust SENClass.ipynb
 jupyter notebook SENClass.ipynb
 ```  
 After the juypter notebook boots, you may still need to select the correct kernel (senclass-env).
+
 Please note that you have to install GDAL and rasterio manually, if you don not use anaconda.
 To do this please download the binaries (.whl-files) from [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/).
 
