@@ -3,9 +3,7 @@ random_forest.py: In the script, the random forest is created, fitted to the dat
 @author: Felix Bachmann
 """
 
-import gdal
 import numpy as np
-import pandas as pd
 from sklearn import ensemble as ensemble
 from sklearn.model_selection import RandomizedSearchCV
 import warnings

@@ -16,7 +16,7 @@ def main():
     out_folder_resampled_scenes = "resamp/"
     path_ref_p = "C:/GEO419/"  # path to reference product
 
-    ref_p_name = "seasonality_10W_40Nv1_3_2020_sub_wgs.tif"
+    ref_p_name = "CLC_subset.tif" #
     raster_ext = "tif"
 
     out_folder_prediction = "results/"  # path from output folder

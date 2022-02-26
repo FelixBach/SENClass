@@ -8,29 +8,9 @@ evaluated:
 import gdal
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from statsmodels.stats.inter_rater import cohens_kappa
 from sklearn.metrics import classification_report
-
-
-def plot_confusion_matrix(cf_matrix):
-    """
-    The function visualizes the confusion matrix as heatmap from seaborn package
-
-    Parameters
-    ----------
-    cf_matrix: numpy.ndarray
-        array with confusion matrix
-
-    Returns
-    -------
-    cf_heatmap: matplotlib.axes._subplots.AxesSubplot
-        cf_heatmap plot with confusion matrix
-    """
-    cf_heatmap = sns.heatmap(cf_matrix / np.sum(cf_matrix), annot=True,
-                             fmt='.2%', cmap='Blues')
-    return cf_heatmap
 
 
 def get_kappa(cf_matrix):
