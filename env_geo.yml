@@ -1,4 +1,4 @@
-name: python37
+name: python_senclass
 channels:
   - defaults
 dependencies:

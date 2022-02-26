@@ -4,6 +4,8 @@ sample_selection.py: contains functions select training and test samples
 """
 
 import os
+from typing import Iterable
+
 import gdal
 import geodata
 import numpy as np
