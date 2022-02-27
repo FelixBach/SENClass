@@ -1,0 +1,543 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to SENClass’s documentation! &#8212; SENClass 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">SENClass 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-senclass-s-documentation">
+<h1>Welcome to SENClass’s documentation!<a class="headerlink" href="#welcome-to-senclass-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="module-SENClass.geodata">
+<span id="geodata-py"></span><h1>geodata.py<a class="headerlink" href="#module-SENClass.geodata" title="Permalink to this headline">¶</a></h1>
+<p>geodata.py: contains functions to process geodata
+&#64;author: Felix Bachmann</p>
+<dl class="function">
+<dt id="SENClass.geodata.open_raster_gdal">
+<code class="descclassname">SENClass.geodata.</code><code class="descname">open_raster_gdal</code><span class="sig-paren">(</span><em>path</em>, <em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/geodata.html#open_raster_gdal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.geodata.open_raster_gdal" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function opens raster files from folder or raster_file_list</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path</strong> (<em>string</em>) – Path to folder with raster files</li>
+<li><strong>file_name</strong> (<em>string</em>) – name of a raster file or file from a raster_file_list</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>gdal_file</strong> – Raster file that can be read as array with numpy</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Gdal file object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.geodata.parse_folder">
+<code class="descclassname">SENClass.geodata.</code><code class="descname">parse_folder</code><span class="sig-paren">(</span><em>path</em>, <em>raster_ext</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/geodata.html#parse_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.geodata.parse_folder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list with all raster files in a folder</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path</strong> (<em>string</em>) – Path to folder with raster files</li>
+<li><strong>raster_ext</strong> (<em>string</em>) – specifies raster format</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>raster_file_list</strong> (<em>list</em>) – list of all raster files in a folder</li>
+<li><strong>raster_file_name</strong> (<em>list</em>) – list of all raster names in a folder</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.geodata.prediction_to_gtiff">
+<code class="descclassname">SENClass.geodata.</code><code class="descname">prediction_to_gtiff</code><span class="sig-paren">(</span><em>prediction</em>, <em>path</em>, <em>out_folder_prediction</em>, <em>name_predicted_image</em>, <em>out_ref_p</em>, <em>raster_ext</em>, <em>mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/geodata.html#prediction_to_gtiff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.geodata.prediction_to_gtiff" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function writes the predicted array to a GTIFF file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>prediction</strong> (<em>numpy.ndarray</em>) – Numpy-Array with the predicted labels</li>
+<li><strong>path</strong> (<em>string</em>) – Path to folder with raster files</li>
+<li><strong>out_folder_prediction</strong> (<em>string</em>) – Name for the output folder for the predicted image</li>
+<li><strong>name_predicted_image</strong> (<em>string</em>) – Name of the predicted image</li>
+<li><strong>out_ref_p</strong> (<em>string</em>) – path to resampled/reclassified reference product</li>
+<li><strong>raster_ext</strong> (<em>string</em>) – specifies raster format</li>
+<li><strong>mask</strong> (<em>numpy.ndarray</em>) – array to mask -99 values</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">This function has no return</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.geodata.reclass_raster">
+<code class="descclassname">SENClass.geodata.</code><code class="descname">reclass_raster</code><span class="sig-paren">(</span><em>raster_value</em>, <em>class_value</em>, <em>out_ref_p</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/geodata.html#reclass_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.geodata.reclass_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>The reference product values are divided into new classes. For that a simple reclassification approach is used. To
+assign new classes, the smallest value in list class_value has to bei higher than the highest value in the
+raster_value list. Otherwise, the reclassification will be wrong. It’s also important that both lists have the same
+length. As user, you have to know the class values of your product.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>raster_value</strong> (<em>list</em>) – list that contains the raster values as class limits</li>
+<li><strong>class_value</strong> (<em>list</em>) – list with new class values</li>
+<li><strong>out_ref_p</strong> (<em>string</em>) – path to resampled/reclassified reference product</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">This function has no return</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.geodata.reproject_raster">
+<code class="descclassname">SENClass.geodata.</code><code class="descname">reproject_raster</code><span class="sig-paren">(</span><em>path</em>, <em>path_ref_p</em>, <em>ref_p_name</em>, <em>raster_ext</em>, <em>out_folder_resampled_scenes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/geodata.html#reproject_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.geodata.reproject_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>The raster used as reference product is projected into the coordinate system of the satellite images. The satellite
+images are not reprojected, but the pixel size is adjusted to that of the reference product.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path</strong> (<em>string</em>) – Path to folder with raster files</li>
+<li><strong>path_ref_p</strong> (<em>string</em>) – Path to the ref_p file (tif-format)</li>
+<li><strong>ref_p_name</strong> (<em>string</em>) – list with paths to satellite files</li>
+<li><strong>raster_ext</strong> (<em>string</em>) – specifies raster format</li>
+<li><strong>out_folder_resampled_scenes</strong> (<em>string</em>) – path for the output folder with the resampled scenes</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">This function has no return</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.geodata.select_samples">
+<code class="descclassname">SENClass.geodata.</code><code class="descname">select_samples</code><span class="sig-paren">(</span><em>path</em>, <em>path_ref_p</em>, <em>out_ref_p</em>, <em>out_folder_resampled_scenes</em>, <em>raster_ext</em>, <em>train_size</em>, <em>random_state</em>, <em>sss</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/geodata.html#select_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.geodata.select_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function select samples for training and testing. The user has the choice between two methods to select the
+test and training pixels. If strat is set to true, the pixels and labels are selected using the sklearn algorithm
+StratifiedShuffleSplit. Otherwise, the pixels and labels are randomly selected from the data frame using the
+sklearn algorithm train_test_split.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path_ref_p</strong> (<em>string</em>) – path to reference file (mask file)</li>
+<li><strong>out_ref_p</strong> (<em>string</em>) – name of reference file</li>
+<li><strong>path</strong> (<em>string</em>) – path to satellite images</li>
+<li><strong>out_folder_resampled_scenes</strong> (<em>string</em>) – path to resampled satellite images</li>
+<li><strong>raster_ext</strong> (<em>string</em>) – extension from raster files</li>
+<li><strong>train_size</strong> (<em>string</em>) – size of the test</li>
+<li><strong>random_state</strong> (<em>int</em>) – Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
+multiple executions.</li>
+<li><strong>sss</strong> (<em>bool</em>) – If True, sk-learn function StratifiedRandomSampling is used to select the samples. If sss is false, sk-learn
+uses train_test_split to select the samples.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>x_train</strong> (<em>list</em>) – list containing the training samples from the satellite images for the random forest algorithm.</li>
+<li><strong>y_train</strong> (<em>list</em>) – list containing the training samples from the reference product for the random forest algorithm.</li>
+<li><strong>data</strong> (<em>pandas.core.frame.DataFrame</em>) – data on which the prediction is executed</li>
+<li><strong>mask</strong> (<em>numpy.ndarray</em>) – array to mask -99 values</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.geodata.tif_visualize">
+<code class="descclassname">SENClass.geodata.</code><code class="descname">tif_visualize</code><span class="sig-paren">(</span><em>path</em>, <em>out_folder_prediction</em>, <em>filename</em>, <em>raster_ext</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/geodata.html#tif_visualize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.geodata.tif_visualize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Visualizes the result as image. The function only visualizes thr result from the water seasonality product.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path</strong> (<em>string</em>) – Path to folder with raster files</li>
+<li><strong>out_folder_prediction</strong> (<em>string</em>) – Path to the folder where the prediction should be saved</li>
+<li><strong>filename</strong> (<em>string</em>) – Name from the file that is stored</li>
+<li><strong>raster_ext</strong> (<em>string</em>) – specifies raster format</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">This function has no return</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.geodata.write_file_gdal">
+<code class="descclassname">SENClass.geodata.</code><code class="descname">write_file_gdal</code><span class="sig-paren">(</span><em>gdal_file</em>, <em>out_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/geodata.html#write_file_gdal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.geodata.write_file_gdal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves gdal files to disk.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>gdal_file</strong> (<em>GDAL file object</em>) – File object containing the data to be written to disk</li>
+<li><strong>out_file</strong> (<em>string</em>) – Path and raster name for the new file</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">This function has no return</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-SENClass.accuracy_assessment">
+<span id="accuracy-assessment-py"></span><h1>accuracy_assessment.py<a class="headerlink" href="#module-SENClass.accuracy_assessment" title="Permalink to this headline">¶</a></h1>
+<p>accuracy_assessment.py: contains functions to assess the accuracy of the RF classifier. The following metrics are
+evaluated:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Confusion matrix (CM)</li>
+<li>Kappa statistic (Kappa)</li>
+</ul>
+</div></blockquote>
+<p>&#64;author: Anastasiia Vynohradova</p>
+<dl class="function">
+<dt id="SENClass.accuracy_assessment.accuracy_assessment">
+<code class="descclassname">SENClass.accuracy_assessment.</code><code class="descname">accuracy_assessment</code><span class="sig-paren">(</span><em>prediction</em>, <em>out_ref_p</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/accuracy_assessment.html#accuracy_assessment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.accuracy_assessment.accuracy_assessment" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function calculates the overall accuracy</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>prediction</strong> (<em>numpy.ndarray</em>) – array with the predicted labels</li>
+<li><strong>out_ref_p</strong> – path to resampled/reclassified reference product</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">This function has no return</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.accuracy_assessment.get_kappa">
+<code class="descclassname">SENClass.accuracy_assessment.</code><code class="descname">get_kappa</code><span class="sig-paren">(</span><em>cf_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/accuracy_assessment.html#get_kappa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.accuracy_assessment.get_kappa" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function calculates a Kappa coefficient</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cf_matrix</strong> (<em>numpy.ndarray</em>) – array with confusion matrix</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>res_kappa</strong> – str with the Kappa Coefficient</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-SENClass.pca">
+<span id="pca-py"></span><h1>pca.py<a class="headerlink" href="#module-SENClass.pca" title="Permalink to this headline">¶</a></h1>
+<p>pca.py: In the script, the Principal component analysis will be performed.
+&#64;author: Anastasiia Vynohradova</p>
+<dl class="function">
+<dt id="SENClass.pca.principal">
+<code class="descclassname">SENClass.pca.</code><code class="descname">principal</code><span class="sig-paren">(</span><em>data</em>, <em>x_train</em>, <em>n_components</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/pca.html#principal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.pca.principal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Linear dimensionality reduction using Singular Value Decomposition of the data to project it to a lower dimensional
+space.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>pandas.core.frame.DataFrame</em>) – Values to apply the prediction to</li>
+<li><strong>x_train</strong> (<em>numpy.ndarray</em>) – array with training values (pixel values from satellite)</li>
+<li><strong>n_components</strong> (<em>int</em>) – Number of dimensions the data will be reduced to</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>data_transformed</strong> (<em>pandas.core.frame.DataFrame</em>) – transformed data which is used for the prediction</li>
+<li><strong>x_train_transformed</strong> (<em>pandas.core.frame.DataFrame</em>) – transformed training data which is used for the random forest</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-SENClass.random_forest">
+<span id="random-forest-py"></span><h1>random_forest.py<a class="headerlink" href="#module-SENClass.random_forest" title="Permalink to this headline">¶</a></h1>
+<p>random_forest.py: In the script, the random forest is created, fitted to the data, and the labels are predicted.
+&#64;author: Felix Bachmann</p>
+<dl class="function">
+<dt id="SENClass.random_forest.rf_create">
+<code class="descclassname">SENClass.random_forest.</code><code class="descname">rf_create</code><span class="sig-paren">(</span><em>max_depth</em>, <em>random_state</em>, <em>n_estimators</em>, <em>n_cores</em>, <em>verbose</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/random_forest.html#rf_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.random_forest.rf_create" title="Permalink to this definition">¶</a></dt>
+<dd><p>The RandomForest will be created with this function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>max_depth</strong> (<em>int</em>) – specifies the maximum depth of the random forest</li>
+<li><strong>random_state</strong> (<em>int</em>) – Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
+multiple executions.</li>
+<li><strong>n_estimators</strong> (<em>int</em>) – specifies the number of trees in the forest</li>
+<li><strong>n_cores</strong> (<em>int</em>) – specifies how many cores are used to fit the model</li>
+<li><strong>verbose</strong> (<em>int</em>) – shows progress in console</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>rf</strong> – unfitted RandomForest model</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">sklearn.ensemble._forest.RandomForestClassifier</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.random_forest.rf_fit">
+<code class="descclassname">SENClass.random_forest.</code><code class="descname">rf_fit</code><span class="sig-paren">(</span><em>rf</em>, <em>x_train</em>, <em>y_train</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/random_forest.html#rf_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.random_forest.rf_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>rf_fit will create the Random Forrest with the defined parameters and fit the model to the training data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>rf</strong> (<em>sklearn.ensemble._forest.RandomForestClassifier</em>) – RandomForest which will be trained</li>
+<li><strong>x_train</strong> (<em>numpy.ndarray</em>) – array with training values (pixel values from satellite)</li>
+<li><strong>y_train</strong> (<em>numpy.ndarray</em>) – array with training values (label values)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>rf_fitted</strong> – fitted RandomForest model</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">sklearn.ensemble._forest.RandomForestClassifier</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.random_forest.rf_parameter_tuning">
+<code class="descclassname">SENClass.random_forest.</code><code class="descname">rf_parameter_tuning</code><span class="sig-paren">(</span><em>x_train</em>, <em>y_train</em>, <em>data</em>, <em>min_depth_t</em>, <em>max_depth_t</em>, <em>min_estimator</em>, <em>max_estimator</em>, <em>value_generator</em>, <em>n_iter</em>, <em>random_state</em>, <em>n_cores</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/random_forest.html#rf_parameter_tuning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.random_forest.rf_parameter_tuning" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function searches for the best RandomForest parameters and will later fit the best performing model and create
+the prediction.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x_train</strong> (<em>numpy.ndarray</em>) – array with training values (pixel values from satellite)</li>
+<li><strong>y_train</strong> (<em>numpy.ndarray</em>) – array with training values (label values)</li>
+<li><strong>data</strong> (<em>pandas.core.frame.DataFrame</em>) – Values to apply the prediction to</li>
+<li><strong>min_depth_t</strong> (<em>int</em>) – minimum depth of the random forest</li>
+<li><strong>max_depth_t</strong> (<em>int</em>) – maximum depth of the random forest</li>
+<li><strong>min_estimator</strong> (<em>int</em>) – specifies the minimum number of trees in the forest</li>
+<li><strong>max_estimator</strong> (<em>int</em>) – specifies the maximum number of trees in the forest</li>
+<li><strong>value_generator</strong> (<em>int</em>) – Generates example values for hyper parameter tuning. As an example, the value of min_estimator is set to 10 and
+max_estimator is set to 20. If value_generator is set to 2, RandomForests are created that have, for example,
+12 or 14 n_estimator. If the value of value_generator is set to 5, RandomForests are created that have, for
+example, 11,12,14,17 and 18 n_estiamtors.</li>
+<li><strong>n_iter</strong> (<em>int</em>) – Number of parameter settings that are sampled.</li>
+<li><strong>random_state</strong> (<em>int</em>) – Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in
+multiple executions.</li>
+<li><strong>n_cores</strong> (<em>int</em>) – specifies how many CPU cores are used to fit the model</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>prediction</strong> – Array with predicted labels</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SENClass.random_forest.rf_predict">
+<code class="descclassname">SENClass.random_forest.</code><code class="descname">rf_predict</code><span class="sig-paren">(</span><em>data</em>, <em>rf_fitted</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SENClass/random_forest.html#rf_predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SENClass.random_forest.rf_predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs the prediction and returning the array with predicted labels.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>pandas.core.frame.DataFrame</em>) – data on which the prediction is executed</li>
+<li><strong>rf_fitted</strong> (<em>sklearn.ensemble._forest.RandomForestClassifier</em>) – fitted RandomForest model</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>prediction</strong> – Array with predicted labels</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to SENClass’s documentation!</a></li>
+<li><a class="reference internal" href="#module-SENClass.geodata">geodata.py</a></li>
+<li><a class="reference internal" href="#module-SENClass.accuracy_assessment">accuracy_assessment.py</a></li>
+<li><a class="reference internal" href="#module-SENClass.pca">pca.py</a></li>
+<li><a class="reference internal" href="#module-SENClass.random_forest">random_forest.py</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">SENClass 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Felix Bachmann, Anastasiia Vynohradova.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

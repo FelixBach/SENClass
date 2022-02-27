@@ -1,0 +1,152 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SENClass.accuracy_assessment &#8212; SENClass 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SENClass 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for SENClass.accuracy_assessment</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">accuracy_assessment.py: contains functions to assess the accuracy of the RF classifier. The following metrics are</span>
+<span class="sd">evaluated:</span>
+<span class="sd">    - Confusion matrix (CM)</span>
+<span class="sd">    - Kappa statistic (Kappa)</span>
+<span class="sd">@author: Anastasiia Vynohradova</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">gdal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">confusion_matrix</span>
+<span class="kn">from</span> <span class="nn">statsmodels.stats.inter_rater</span> <span class="kn">import</span> <span class="n">cohens_kappa</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">classification_report</span>
+
+
+<div class="viewcode-block" id="get_kappa"><a class="viewcode-back" href="../../index.html#SENClass.accuracy_assessment.get_kappa">[docs]</a><span class="k">def</span> <span class="nf">get_kappa</span><span class="p">(</span><span class="n">cf_matrix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The function calculates a Kappa coefficient</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cf_matrix: numpy.ndarray</span>
+<span class="sd">        array with confusion matrix</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    res_kappa: str</span>
+<span class="sd">        str with the Kappa Coefficient</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kappa</span> <span class="o">=</span> <span class="n">cohens_kappa</span><span class="p">(</span><span class="n">cf_matrix</span><span class="p">)</span><span class="o">.</span><span class="n">kappa</span>
+    <span class="n">res_kappa</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Kappa Coefficient is </span><span class="si">{</span><span class="n">kappa</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="k">return</span> <span class="nb">print</span><span class="p">(</span><span class="n">res_kappa</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="accuracy_assessment"><a class="viewcode-back" href="../../index.html#SENClass.accuracy_assessment.accuracy_assessment">[docs]</a><span class="k">def</span> <span class="nf">accuracy_assessment</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">out_ref_p</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The function calculates the overall accuracy</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prediction: numpy.ndarray</span>
+<span class="sd">        array with the predicted labels</span>
+<span class="sd">    out_ref_p:</span>
+<span class="sd">        path to resampled/reclassified reference product</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    This function has no return</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># open reference product</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">####################   -   Accuracy Assessment   -   ####################&#39;</span><span class="p">)</span>
+    <span class="n">ref_p</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">out_ref_p</span><span class="p">)</span>
+    <span class="n">ref_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ref_p</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">())</span>
+    <span class="n">ref_p</span> <span class="o">=</span> <span class="n">ref_p</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="n">cf_matrix_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">ref_p</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">rownames</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Actual&#39;</span><span class="p">],</span> <span class="n">colnames</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Predicted&#39;</span><span class="p">],</span> <span class="n">margins</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">##########   -   Confusion Matrix   -   ##########&#39;</span><span class="p">)</span>
+
+    <span class="c1"># display full dataframe without truncation</span>
+    <span class="k">with</span> <span class="n">pd</span><span class="o">.</span><span class="n">option_context</span><span class="p">(</span><span class="s1">&#39;display.max_columns&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span>
+                           <span class="s1">&#39;display.width&#39;</span><span class="p">,</span> <span class="mi">640</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">cf_matrix_pd</span><span class="p">)</span>
+
+    <span class="n">cf_matrix</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">ref_p</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">class_report</span> <span class="o">=</span> <span class="n">classification_report</span><span class="p">(</span><span class="n">ref_p</span><span class="p">,</span> <span class="n">prediction</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">##########   -   Classification report   -   ##########&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">class_report</span><span class="p">)</span>
+    <span class="n">get_kappa</span><span class="p">(</span><span class="n">cf_matrix</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SENClass 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Felix Bachmann, Anastasiia Vynohradova.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

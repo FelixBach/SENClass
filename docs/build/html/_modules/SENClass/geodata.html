@@ -1,0 +1,532 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SENClass.geodata &#8212; SENClass 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SENClass 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for SENClass.geodata</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">geodata.py: contains functions to process geodata</span>
+<span class="sd">@author: Felix Bachmann</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">osr</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">gdal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">rasterio</span>
+<span class="kn">from</span> <span class="nn">rasterio.plot</span> <span class="kn">import</span> <span class="n">show</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">colors</span>
+<span class="kn">import</span> <span class="nn">matplotlib.patches</span> <span class="k">as</span> <span class="nn">mpatches</span>
+<span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="kn">import</span> <span class="n">FormatStrFormatter</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">StratifiedShuffleSplit</span>
+
+
+<div class="viewcode-block" id="parse_folder"><a class="viewcode-back" href="../../index.html#SENClass.geodata.parse_folder">[docs]</a><span class="k">def</span> <span class="nf">parse_folder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">raster_ext</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a list with all raster files in a folder</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path: string</span>
+<span class="sd">        Path to folder with raster files</span>
+<span class="sd">    raster_ext: string</span>
+<span class="sd">        specifies raster format</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    raster_file_list: list</span>
+<span class="sd">        list of all raster files in a folder</span>
+<span class="sd">    raster_file_name: list</span>
+<span class="sd">        list of all raster names in a folder</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">##########   -   Searching for files   -   ##########&#39;</span><span class="p">)</span>
+    <span class="n">raster_file_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">raster_file_name</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;*&quot;</span> <span class="o">+</span> <span class="n">raster_ext</span><span class="p">):</span>
+        <span class="n">raster_file_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">raster_file_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">raster_file_list</span><span class="p">]</span>
+        <span class="n">raster_file_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">):</span><span class="mi">1000</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">raster_file_list</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">raster_file_list</span><span class="p">,</span> <span class="n">raster_file_name</span></div>
+
+
+<div class="viewcode-block" id="open_raster_gdal"><a class="viewcode-back" href="../../index.html#SENClass.geodata.open_raster_gdal">[docs]</a><span class="k">def</span> <span class="nf">open_raster_gdal</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">file_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The function opens raster files from folder or raster_file_list</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path: string</span>
+<span class="sd">        Path to folder with raster files</span>
+<span class="sd">    file_name: string</span>
+<span class="sd">        name of a raster file or file from a raster_file_list</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gdal_file: Gdal file object</span>
+<span class="sd">        Raster file that can be read as array with numpy</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+    <span class="n">gdal_file</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">gdal_file</span></div>
+
+
+<div class="viewcode-block" id="write_file_gdal"><a class="viewcode-back" href="../../index.html#SENClass.geodata.write_file_gdal">[docs]</a><span class="k">def</span> <span class="nf">write_file_gdal</span><span class="p">(</span><span class="n">gdal_file</span><span class="p">,</span> <span class="n">out_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Saves gdal files to disk.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gdal_file: GDAL file object</span>
+<span class="sd">        File object containing the data to be written to disk</span>
+<span class="sd">    out_file: string</span>
+<span class="sd">        Path and raster name for the new file</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    This function has no return</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s1">&#39;GTIFF&#39;</span><span class="p">)</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">gdal_file</span><span class="o">.</span><span class="n">RasterYSize</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">gdal_file</span><span class="o">.</span><span class="n">RasterXSize</span>
+    <span class="n">bands</span> <span class="o">=</span> <span class="n">gdal_file</span><span class="o">.</span><span class="n">RasterCount</span>
+
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">bands</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+    <span class="n">out_file</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">gdal_file</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+    <span class="n">out_file</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">gdal_file</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bands</span><span class="p">):</span>
+        <span class="n">band</span> <span class="o">=</span> <span class="n">gdal_file</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">()</span>
+        <span class="n">out_file</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">band</span><span class="p">)</span>
+
+    <span class="n">out_file</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>  <span class="c1"># save from memory to disk</span></div>
+
+
+<div class="viewcode-block" id="reclass_raster"><a class="viewcode-back" href="../../index.html#SENClass.geodata.reclass_raster">[docs]</a><span class="k">def</span> <span class="nf">reclass_raster</span><span class="p">(</span><span class="n">raster_value</span><span class="p">,</span> <span class="n">class_value</span><span class="p">,</span> <span class="n">out_ref_p</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The reference product values are divided into new classes. For that a simple reclassification approach is used. To</span>
+<span class="sd">    assign new classes, the smallest value in list class_value has to bei higher than the highest value in the</span>
+<span class="sd">    raster_value list. Otherwise, the reclassification will be wrong. It&#39;s also important that both lists have the same</span>
+<span class="sd">    length. As user, you have to know the class values of your product.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    raster_value: list</span>
+<span class="sd">        list that contains the raster values as class limits</span>
+<span class="sd">    class_value: list</span>
+<span class="sd">        list with new class values</span>
+<span class="sd">    out_ref_p: string</span>
+<span class="sd">        path to resampled/reclassified reference product</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    This function has no return</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">##########   -   Reclassifying data   -   ##########&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">class_value</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">raster_value</span><span class="p">):</span>
+        <span class="n">ref_p</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">out_ref_p</span><span class="p">)</span>
+
+        <span class="n">gt</span> <span class="o">=</span> <span class="n">ref_p</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">()</span>
+        <span class="n">prj</span> <span class="o">=</span> <span class="n">ref_p</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">()</span>
+        <span class="n">srs</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">(</span><span class="n">wkt</span><span class="o">=</span><span class="n">prj</span><span class="p">)</span>
+
+        <span class="n">ref_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ref_p</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raster_value</span><span class="p">):</span>
+            <span class="n">ref_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ref_p</span> <span class="o">&lt;=</span> <span class="n">raster_value</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">class_value</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ref_p</span><span class="p">)</span>
+
+        <span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s1">&#39;GTIFF&#39;</span><span class="p">)</span>
+        <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">ref_p</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">out_ds</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_ref_p</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_UInt16</span><span class="p">)</span>
+        <span class="n">out_ds</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">ref_p</span><span class="p">)</span>
+        <span class="n">out_ds</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">gt</span><span class="p">)</span>
+        <span class="n">out_ds</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">srs</span><span class="o">.</span><span class="n">ExportToWkt</span><span class="p">())</span>
+        <span class="n">out_ds</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;reclassified reference product&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;list raster_value and class_value do not have the same length. No reclassification possible. Continue &#39;</span>
+              <span class="sa">f</span><span class="s1">&#39;with sample selection.&#39;</span><span class="p">)</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="reproject_raster"><a class="viewcode-back" href="../../index.html#SENClass.geodata.reproject_raster">[docs]</a><span class="k">def</span> <span class="nf">reproject_raster</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">path_ref_p</span><span class="p">,</span> <span class="n">ref_p_name</span><span class="p">,</span> <span class="n">raster_ext</span><span class="p">,</span> <span class="n">out_folder_resampled_scenes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The raster used as reference product is projected into the coordinate system of the satellite images. The satellite</span>
+<span class="sd">    images are not reprojected, but the pixel size is adjusted to that of the reference product.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path: string</span>
+<span class="sd">        Path to folder with raster files</span>
+<span class="sd">    path_ref_p: string</span>
+<span class="sd">        Path to the ref_p file (tif-format)</span>
+<span class="sd">    ref_p_name: string</span>
+<span class="sd">        list with paths to satellite files</span>
+<span class="sd">    raster_ext: string</span>
+<span class="sd">        specifies raster format</span>
+<span class="sd">    out_folder_resampled_scenes: string</span>
+<span class="sd">        path for the output folder with the resampled scenes</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    This function has no return</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">####################   -   Preparing the Geodata   -   ####################&#39;</span><span class="p">)</span>
+    <span class="c1"># search for files in input folder</span>
+    <span class="n">raster_file_list</span><span class="p">,</span> <span class="n">raster_file_name</span> <span class="o">=</span> <span class="n">parse_folder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">raster_ext</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1"> contains </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">raster_file_list</span><span class="p">)</span><span class="si">}</span><span class="s1"> raster files </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">##########   -   Reprojecting data   -   ##########&#39;</span><span class="p">)</span>
+    <span class="c1"># get spatial reference from reference product</span>
+    <span class="n">ref_p_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_ref_p</span><span class="p">,</span> <span class="n">ref_p_name</span><span class="p">)</span>
+    <span class="n">ref_p</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">ref_p_file</span><span class="p">)</span>
+    <span class="n">proj_ref_p</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">(</span><span class="n">wkt</span><span class="o">=</span><span class="n">ref_p</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+    <span class="n">epsg_ref_p</span> <span class="o">=</span> <span class="n">proj_ref_p</span><span class="o">.</span><span class="n">GetAttrValue</span><span class="p">(</span><span class="s1">&#39;AUTHORITY&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># get spatial reference from satellite data</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">raster_file_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">proj_s1</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">(</span><span class="n">wkt</span><span class="o">=</span><span class="n">s1</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+    <span class="n">epsg_s1</span> <span class="o">=</span> <span class="n">proj_s1</span><span class="o">.</span><span class="n">GetAttrValue</span><span class="p">(</span><span class="s1">&#39;AUTHORITY&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">gt_s1</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">()</span>
+    <span class="n">pix_size_s1</span> <span class="o">=</span> <span class="n">gt_s1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">minx</span> <span class="o">=</span> <span class="n">gt_s1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">maxy</span> <span class="o">=</span> <span class="n">gt_s1</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">maxx</span> <span class="o">=</span> <span class="n">minx</span> <span class="o">+</span> <span class="n">gt_s1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">s1</span><span class="o">.</span><span class="n">RasterXSize</span>
+    <span class="n">miny</span> <span class="o">=</span> <span class="n">maxy</span> <span class="o">+</span> <span class="n">gt_s1</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="n">s1</span><span class="o">.</span><span class="n">RasterYSize</span>
+
+    <span class="n">ref_p_res</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Warp</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">ref_p</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;VRT&#39;</span><span class="p">,</span> <span class="n">dstSRS</span><span class="o">=</span><span class="s1">&#39;EPSG:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epsg_s1</span><span class="p">),</span> <span class="n">outputType</span><span class="o">=</span><span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Int16</span><span class="p">,</span>
+                          <span class="n">outputBounds</span><span class="o">=</span><span class="p">[</span><span class="n">minx</span><span class="p">,</span> <span class="n">miny</span><span class="p">,</span> <span class="n">maxx</span><span class="p">,</span> <span class="n">maxy</span><span class="p">])</span>
+
+    <span class="c1"># writing reprojected reference product to disk</span>
+    <span class="n">out_ref_p</span> <span class="o">=</span> <span class="n">ref_p_file</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="s2">&quot;_reprojected.tif&quot;</span><span class="p">)</span>
+    <span class="n">write_file_gdal</span><span class="p">(</span><span class="n">ref_p_res</span><span class="p">,</span> <span class="n">out_ref_p</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;reprojected </span><span class="si">{</span><span class="n">ref_p_file</span><span class="si">}</span><span class="s1"> file from EPSG </span><span class="si">{</span><span class="n">epsg_ref_p</span><span class="si">}</span><span class="s1"> to EPSG </span><span class="si">{</span><span class="n">epsg_s1</span><span class="si">}</span><span class="s1"> </span><span class="se">\n</span><span class="s1">&#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;location from resampled file: </span><span class="si">{</span><span class="n">out_ref_p</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="c1"># create directory for resampled Sentinel scenes</span>
+    <span class="n">out_folder</span> <span class="o">=</span> <span class="n">out_folder_resampled_scenes</span>
+    <span class="n">out_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">out_folder</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">out_folder</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_folder</span><span class="p">)</span>
+
+    <span class="c1"># resampling satellite data</span>
+    <span class="n">ref_p</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">out_ref_p</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">raster</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raster_file_list</span><span class="p">):</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">raster_file_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="n">gt_ref_p</span> <span class="o">=</span> <span class="n">ref_p</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">()</span>
+        <span class="n">psize_ref_p</span> <span class="o">=</span> <span class="n">gt_ref_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">gt</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">()</span>
+        <span class="n">minx</span> <span class="o">=</span> <span class="n">gt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">maxy</span> <span class="o">=</span> <span class="n">gt</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">maxx</span> <span class="o">=</span> <span class="n">minx</span> <span class="o">+</span> <span class="n">gt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">s1</span><span class="o">.</span><span class="n">RasterXSize</span>
+        <span class="n">miny</span> <span class="o">=</span> <span class="n">maxy</span> <span class="o">+</span> <span class="n">gt</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="n">s1</span><span class="o">.</span><span class="n">RasterYSize</span>
+
+        <span class="n">s1_res</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Warp</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;VRT&#39;</span><span class="p">,</span> <span class="n">xRes</span><span class="o">=</span><span class="n">psize_ref_p</span><span class="p">,</span> <span class="n">yRes</span><span class="o">=</span><span class="n">psize_ref_p</span><span class="p">,</span>
+                           <span class="n">outputType</span><span class="o">=</span><span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">,</span> <span class="n">outputBounds</span><span class="o">=</span><span class="p">[</span><span class="n">minx</span><span class="p">,</span> <span class="n">miny</span><span class="p">,</span> <span class="n">maxx</span><span class="p">,</span> <span class="n">maxy</span><span class="p">])</span>
+
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">raster_file_name</span><span class="p">[</span><span class="n">i</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="s2">&quot;_resampled.tif&quot;</span><span class="p">)</span>
+        <span class="n">file_check</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_folder</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_check</span><span class="p">):</span>
+            <span class="n">out_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_folder</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+            <span class="n">write_file_gdal</span><span class="p">(</span><span class="n">s1_res</span><span class="p">,</span> <span class="n">out_file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;resampled </span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1"> scenes from </span><span class="si">{</span><span class="n">pix_size_s1</span><span class="si">}</span><span class="s1">m to </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">psize_ref_p</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">m&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;resampled file already exists&#39;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;location from resampled satellite images: </span><span class="si">{</span><span class="n">out_folder</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out_ref_p</span></div>
+
+
+<div class="viewcode-block" id="select_samples"><a class="viewcode-back" href="../../index.html#SENClass.geodata.select_samples">[docs]</a><span class="k">def</span> <span class="nf">select_samples</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">path_ref_p</span><span class="p">,</span> <span class="n">out_ref_p</span><span class="p">,</span> <span class="n">out_folder_resampled_scenes</span><span class="p">,</span> <span class="n">raster_ext</span><span class="p">,</span> <span class="n">train_size</span><span class="p">,</span> <span class="n">random_state</span><span class="p">,</span>
+                   <span class="n">sss</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The function select samples for training and testing. The user has the choice between two methods to select the</span>
+<span class="sd">    test and training pixels. If strat is set to true, the pixels and labels are selected using the sklearn algorithm</span>
+<span class="sd">    StratifiedShuffleSplit. Otherwise, the pixels and labels are randomly selected from the data frame using the</span>
+<span class="sd">    sklearn algorithm train_test_split.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path_ref_p: string</span>
+<span class="sd">        path to reference file (mask file)</span>
+<span class="sd">    out_ref_p: string</span>
+<span class="sd">        name of reference file</span>
+<span class="sd">    path: string</span>
+<span class="sd">        path to satellite images</span>
+<span class="sd">    out_folder_resampled_scenes: string</span>
+<span class="sd">        path to resampled satellite images</span>
+<span class="sd">    raster_ext: string</span>
+<span class="sd">        extension from raster files</span>
+<span class="sd">    train_size: string</span>
+<span class="sd">        size of the test</span>
+<span class="sd">    random_state: int</span>
+<span class="sd">        Returns a random number between 0 and 43 and ensures that the randomly selected elements are not identical in</span>
+<span class="sd">        multiple executions.</span>
+<span class="sd">    sss: bool</span>
+<span class="sd">        If True, sk-learn function StratifiedRandomSampling is used to select the samples. If sss is false, sk-learn</span>
+<span class="sd">        uses train_test_split to select the samples.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    x_train: list</span>
+<span class="sd">        list containing the training samples from the satellite images for the random forest algorithm.</span>
+<span class="sd">    y_train: list</span>
+<span class="sd">        list containing the training samples from the reference product for the random forest algorithm.</span>
+<span class="sd">    data: pandas.core.frame.DataFrame</span>
+<span class="sd">        data on which the prediction is executed</span>
+<span class="sd">    mask: numpy.ndarray</span>
+<span class="sd">        array to mask -99 values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">####################   -   Start sample selection   -   ####################&#39;</span><span class="p">)</span>
+    <span class="k">global</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span>
+
+    <span class="n">res_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">out_folder_resampled_scenes</span><span class="p">)</span>
+    <span class="n">raster_file_list</span><span class="p">,</span> <span class="n">raster_file_name</span> <span class="o">=</span> <span class="n">parse_folder</span><span class="p">(</span><span class="n">res_path</span><span class="p">,</span> <span class="n">raster_ext</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">res_path</span><span class="si">}</span><span class="s1"> contains </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">raster_file_list</span><span class="p">)</span><span class="si">}</span><span class="s1"> resampled raster files </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">##########   -   Preparing data   -   ##########&#39;</span><span class="p">)</span>
+
+    <span class="n">len_ras_li</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raster_file_list</span><span class="p">)</span>  <span class="c1"># number of satellite images</span>
+
+    <span class="n">ref_p</span> <span class="o">=</span> <span class="n">open_raster_gdal</span><span class="p">(</span><span class="n">path_ref_p</span><span class="p">,</span> <span class="n">out_ref_p</span><span class="p">)</span>
+    <span class="n">ref_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ref_p</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">())</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating data frame with labels and pixel values from satellite images&quot;</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ref_p</span><span class="p">[:])</span><span class="o">.</span><span class="n">flat</span><span class="p">)</span>  <span class="c1"># read the class labels</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Label_nr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">len_ras_li</span><span class="p">):</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">raster_file_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">())</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">layer</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">flat</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;file_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">layer</span>
+
+    <span class="c1"># create an edge mask with NaN values</span>
+    <span class="n">raster</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">raster_file_list</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">raster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">raster</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">())</span>
+    <span class="n">raster</span><span class="p">[</span><span class="n">raster</span> <span class="o">==</span> <span class="o">-</span><span class="mi">99</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">raster</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">df</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
+    <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">99</span><span class="p">]</span>  <span class="c1"># remove all -99 values from data frame</span>
+    <span class="n">df2</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>  <span class="c1"># remove all NaN values from data frame</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Removing -99 and NaN-values from data frame&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">sss</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">##########   -   Using StratifiedShuffleSplit from sklearn.model_selection  -   ##########&#39;</span><span class="p">)</span>
+        <span class="n">row_count</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># get max rows from data frame</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="n">row_count</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">sss</span> <span class="o">=</span> <span class="n">StratifiedShuffleSplit</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="n">train_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">train_index</span><span class="p">,</span> <span class="n">test_index</span> <span class="ow">in</span> <span class="n">sss</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+            <span class="n">x_train</span><span class="p">,</span> <span class="n">x_test</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">train_index</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="n">test_index</span><span class="p">]</span>
+            <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">train_index</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">test_index</span><span class="p">]</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> pixels used for training </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">mask</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">##########   -   Using train_test_split from sklearn.model_selection   -   ##########&#39;</span><span class="p">)</span>
+        <span class="n">row_count</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># get max rows from data frame</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="n">row_count</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">x_train</span><span class="p">,</span> <span class="n">x_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="n">train_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span>
+                                                            <span class="n">stratify</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> pixels used for training </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">mask</span></div>
+
+
+<div class="viewcode-block" id="prediction_to_gtiff"><a class="viewcode-back" href="../../index.html#SENClass.geodata.prediction_to_gtiff">[docs]</a><span class="k">def</span> <span class="nf">prediction_to_gtiff</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">out_folder_prediction</span><span class="p">,</span> <span class="n">name_predicted_image</span><span class="p">,</span> <span class="n">out_ref_p</span><span class="p">,</span> <span class="n">raster_ext</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The function writes the predicted array to a GTIFF file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prediction: numpy.ndarray</span>
+<span class="sd">        Numpy-Array with the predicted labels</span>
+<span class="sd">    path: string</span>
+<span class="sd">        Path to folder with raster files</span>
+<span class="sd">    out_folder_prediction: string</span>
+<span class="sd">        Name for the output folder for the predicted image</span>
+<span class="sd">    name_predicted_image: string</span>
+<span class="sd">        Name of the predicted image</span>
+<span class="sd">    out_ref_p: string</span>
+<span class="sd">        path to resampled/reclassified reference product</span>
+<span class="sd">    raster_ext: string</span>
+<span class="sd">        specifies raster format</span>
+<span class="sd">    mask: numpy.ndarray</span>
+<span class="sd">        array to mask -99 values</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    This function has no return</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># create name for output folder</span>
+    <span class="n">out_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">out_folder_prediction</span><span class="p">)</span>
+
+    <span class="c1"># create directory for predicted image</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">out_folder</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_folder</span><span class="p">)</span>
+
+    <span class="c1"># create file name and check for existing</span>
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">out_folder</span> <span class="o">+</span> <span class="n">name_predicted_image</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">raster_ext</span>
+    <span class="n">file_check</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_folder</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_check</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">##########   -   save predicted image   -   ##########&#39;</span><span class="p">)</span>
+        <span class="c1"># read meta information from reference product</span>
+        <span class="n">ref_p</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">out_ref_p</span><span class="p">)</span>
+        <span class="n">gt</span> <span class="o">=</span> <span class="n">ref_p</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">()</span>
+        <span class="n">prj</span> <span class="o">=</span> <span class="n">ref_p</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">()</span>
+        <span class="n">srs</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">(</span><span class="n">wkt</span><span class="o">=</span><span class="n">prj</span><span class="p">)</span>
+        <span class="n">ref_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ref_p</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">())</span>
+        <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">ref_p</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="c1"># reshaping prediction and saving raster with meta information from reference product to disk</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">))</span>
+        <span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s1">&#39;GTIFF&#39;</span><span class="p">)</span>
+        <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">ref_p</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
+
+        <span class="c1"># apply an edge mask with NaN values</span>
+        <span class="n">grid</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">nodata</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">out_ds</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_UInt16</span><span class="p">)</span>
+        <span class="c1"># writing output raster</span>
+        <span class="n">out_ds</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
+        <span class="n">out_ds</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">SetNoDataValue</span><span class="p">(</span><span class="n">nodata</span><span class="p">)</span>
+        <span class="n">out_ds</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">gt</span><span class="p">)</span>
+        <span class="c1"># setting spatial reference of output raster</span>
+        <span class="n">out_ds</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">srs</span><span class="o">.</span><span class="n">ExportToWkt</span><span class="p">())</span>
+        <span class="c1"># Close output raster dataset</span>
+        <span class="n">out_ds</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;GTIFF created from predicted labels&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;predicted image already exists&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="tif_visualize"><a class="viewcode-back" href="../../index.html#SENClass.geodata.tif_visualize">[docs]</a><span class="k">def</span> <span class="nf">tif_visualize</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">out_folder_prediction</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">raster_ext</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visualizes the result as image. The function only visualizes thr result from the water seasonality product.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path: string</span>
+<span class="sd">        Path to folder with raster files</span>
+<span class="sd">    out_folder_prediction: string</span>
+<span class="sd">       Path to the folder where the prediction should be saved</span>
+<span class="sd">    filename: string</span>
+<span class="sd">        Name from the file that is stored</span>
+<span class="sd">    raster_ext: string</span>
+<span class="sd">        specifies raster format</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    This function has no return</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">out_folder_prediction</span><span class="p">,</span> <span class="n">filename</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">raster_ext</span><span class="p">))</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+    <span class="n">cmap</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">ListedColormap</span><span class="p">([</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="s1">&#39;cyan&#39;</span><span class="p">,</span> <span class="s1">&#39;royalblue&#39;</span><span class="p">])</span>
+    <span class="n">white_box</span> <span class="o">=</span> <span class="n">mpatches</span><span class="o">.</span><span class="n">Patch</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;not flooded&#39;</span><span class="p">)</span>
+    <span class="n">blue_box</span> <span class="o">=</span> <span class="n">mpatches</span><span class="o">.</span><span class="n">Patch</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;cyan&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;temporarily flooded&#39;</span><span class="p">)</span>
+    <span class="n">red_box</span> <span class="o">=</span> <span class="n">mpatches</span><span class="o">.</span><span class="n">Patch</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;royalblue&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;permanently flooded&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="p">[</span><span class="n">white_box</span><span class="p">,</span> <span class="n">blue_box</span><span class="p">,</span> <span class="n">red_box</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Classes&#39;</span><span class="p">,</span> <span class="n">handlelength</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">1.05</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">),</span>
+              <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower left&#39;</span><span class="p">,</span> <span class="n">borderaxespad</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%.0f</span><span class="s1">&#39;</span><span class="p">))</span>
+    <span class="n">show</span><span class="p">(</span><span class="n">result</span><span class="p">,</span>
+         <span class="n">transform</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Classification result&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SENClass 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Felix Bachmann, Anastasiia Vynohradova.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>
