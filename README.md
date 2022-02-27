@@ -1,5 +1,8 @@
 # SENClass - Processing of Sentinel-1 data
 
+This package is based on a project from the M.Sc Geoinformatics in the module "GEOG 419 II- Modullare Programmierung in der FE" from the Friedrich-Schiller-Universität Jena and was developed by Felix Bachmann and Anastasiia Vynohradova. With SENCLass a random forest classification can be performed. 
+
+
 ## Installation 
 
 The easiest way to install the package is via a Conda environment. To do so follow these steps:
