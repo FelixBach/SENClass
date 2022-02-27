@@ -11,21 +11,25 @@ start_time = datetime.now()
 
 def main():
     #####     INPUTS     #####
-    path = "C:/GEO419/Spain_Donana_S1-VV/"
+    path = ""
 
     out_folder_resampled_scenes = "resamp/"
-    path_ref_p = "C:/GEO419/"  # path to reference product
+    path_ref_p = ""  # path to reference product
 
-    ref_p_name = "CLC_subset.tif" #
-    raster_ext = "tif"
+    ref_p_name = ""
+    raster_ext = ""
 
     out_folder_prediction = "results/"  # path from output folder
     name_predicted_image = "base_prediction_nd_0"
     name_tuned_predicted_image = "tune_prediction_nd_0"
 
-    # values for reclassifying raster data
+    # values for reclassifying raster data (Global Surface Water)
     raster_value = [0, 11, 12]
     class_value = [100, 200, 300]
+
+    # values for reclassifying raster data (CLC)
+    # raster_value = [11, 22, 34, 39, 44]
+    # class_value = [100, 200, 300, 400, 500]
 
     # random_state = np.random.randint(low=0, high=43)  # random value for sample selection and random forest
     random_state = 0
