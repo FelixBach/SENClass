@@ -15,7 +15,7 @@ conda env create -f env_geo.yml
 conda activate python_senclass
 ```
 ```
-pip install git+https://github.com/FelixBach/SENClass.git```
+pip install git+https://github.com/FelixBach/SENClass.git
 ```
 ```
 pip install jupyter notebook
