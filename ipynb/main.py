@@ -11,17 +11,17 @@ start_time = datetime.now()
 
 def main():
     #####     INPUTS     #####
-    path = ""
+    path = "path/to/satellite/images/"
 
     out_folder_resampled_scenes = "resamp/"
-    path_ref_p = ""  # path to reference product
+    path_ref_p = "path/to/data/reference/product/"  # path to reference product
 
-    ref_p_name = ""
-    raster_ext = ""
+    ref_p_name = "reference_product_name.tif"   # name with .tif ending
+    raster_ext = "tif"
 
     out_folder_prediction = "results/"  # path from output folder
-    name_predicted_image = "base_prediction_nd_0"
-    name_tuned_predicted_image = "tune_prediction_nd_0"
+    name_predicted_image = "base_prediction"
+    name_tuned_predicted_image = "tune_prediction"
 
     # values for reclassifying raster data (Global Surface Water)
     raster_value = [0, 11, 12]
