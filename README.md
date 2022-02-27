@@ -23,9 +23,7 @@ pip install jupyter notebook
 ```
 python -m ipykernel install --user --name python_senclass --display-name "senclass-env"
 ```
-```
-cd “path/with/notebook”
-```
+Change the path to the folder with the Jupyter-Notebook. You can find the notebook in the ipynb folder.
 ```
 jupyter trust SENClass.ipynb
 ```
