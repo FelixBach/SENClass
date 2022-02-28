@@ -15,24 +15,25 @@ setup(name='SENClass',
       include_package_data=True,
       setup_requires=['setuptools_scm'],
       use_scm_version=True,
-      description='SENClass',
+      description='Tool for the classification of Sentinel-1 data with a random forest',
       classifiers=[
-          'License :: FSF Approved :: GPLv3',
+          'License :: FSF Approved :: MIT License',
           'Operating System :: Microsoft :: Windows',
           'Programming Language :: Python',
       ],
-      install_requires=['rasterio',
-                        'numpy',
-                        'setuptools',
-                        'datetime',
+      install_requires=['numpy',
                         'matplotlib',
-                        'Sphinx',
-                        'gdal'],
-      python_requires='>=3.6.0',
+                        'pandas',
+                        'scikit-learn'
+                        'gdal',
+                        'rasterio',
+                        'statsmodels',
+                        'setuptools'],
+      python_requires='>=3.7.0',
       url='https://github.com/FelixBach/SENClass.git',
-      author='Felix Bachmann',  # 'Maximilian Nestler'  # how to add second author?
-      author_email='Felix.Bachmann@uni-jena.de',  # 'Maximilian.Nestler@uni-jena.de'
-      license='GPLv3',
+      author='Felix Bachmann',  # 'Anastasiia Vynohradova'
+      author_email='Felix.Bachmann@uni-jena.de',  # 'anastasiia.vynohradova@uni-jena.de'
+      license='MIT',
       zip_safe=False,
       long_description=long_description,
       long_description_content_type='text/markdown')
