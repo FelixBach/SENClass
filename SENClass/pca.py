@@ -31,12 +31,16 @@ def principal(data, x_train, n_components):
     """
     print('\n####################   -   Performing PCA   -   ####################')
     pca = PCA(n_components=n_components)
-    data = StandardScaler().fit_transform(data)
-    data_transformed = pca.fit_transform(data)
 
+    # standardize the values
+    data = StandardScaler().fit_transform(data)
     x_train = StandardScaler().fit_transform(x_train)
+
+    # performing PCA
+    data_transformed = pca.fit_transform(data)
     x_train = pca.fit_transform(x_train)
 
+    # save as DataFrame
     x_train_transformed = pd.DataFrame(x_train)
     data_transformed = pd.DataFrame(data_transformed)
 

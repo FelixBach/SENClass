@@ -1,6 +1,6 @@
 """
 geodata.py: contains functions to process geodata
-@author: Felix Bachmann
+@author: Felix Bachmann, Anastasiia Vynohradova
 """
 
 import os
@@ -40,6 +40,8 @@ def parse_folder(path, raster_ext):
     print('\n##########   -   Searching for files   -   ##########')
     raster_file_list = []
     raster_file_name = []
+
+    # parsing folder for files
     for file in glob.glob(path + "*" + raster_ext):
         raster_file_list.append(file)
         raster_file_list = [w.replace('\\', '/') for w in raster_file_list]
@@ -86,7 +88,10 @@ def write_file_gdal(gdal_file, out_file):
     -------
     This function has no return
     """
+    # call driver
     driver = gdal.GetDriverByName('GTIFF')
+
+    # define pixel size and number of badns
     cols = gdal_file.RasterYSize
     rows = gdal_file.RasterXSize
     bands = gdal_file.RasterCount
@@ -124,6 +129,8 @@ def reclass_raster(raster_value, class_value, out_ref_p):
     This function has no return
     """
     print('\n##########   -   Reclassifying data   -   ##########')
+
+    # check if lists are of the same length
     if len(class_value) == len(raster_value):
         ref_p = gdal.Open(out_ref_p)
 
@@ -131,10 +138,12 @@ def reclass_raster(raster_value, class_value, out_ref_p):
         prj = ref_p.GetProjection()
         srs = osr.SpatialReference(wkt=prj)
 
+        # reclassifying with loop
         ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
         for i, value in enumerate(raster_value):
             ref_p = np.where(ref_p <= raster_value[i], class_value[i], ref_p)
 
+        # saving file
         driver = gdal.GetDriverByName('GTIFF')
         rows, cols = ref_p.shape
         out_ds = driver.Create(out_ref_p, cols, rows, 1, gdal.GDT_UInt16)
@@ -195,6 +204,7 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
     maxx = minx + gt_s1[1] * s1.RasterXSize
     miny = maxy + gt_s1[5] * s1.RasterYSize
 
+    # performing reprojecting
     ref_p_res = gdal.Warp('', ref_p, format='VRT', dstSRS='EPSG:{}'.format(epsg_s1), outputType=gdal.GDT_Int16,
                           outputBounds=[minx, miny, maxx, maxy])
 
@@ -224,9 +234,11 @@ def reproject_raster(path, path_ref_p, ref_p_name, raster_ext, out_folder_resamp
         maxx = minx + gt[1] * s1.RasterXSize
         miny = maxy + gt[5] * s1.RasterYSize
 
+        # performing reprojecting for each scene
         s1_res = gdal.Warp('', s1, format='VRT', xRes=psize_ref_p, yRes=psize_ref_p,
                            outputType=gdal.GDT_Float32, outputBounds=[minx, miny, maxx, maxy])
 
+        # check for file
         file_name = raster_file_name[i][:-4] + str("_resampled.tif")
         file_check = os.path.join(out_folder, file_name)
         if not os.path.isfile(file_check):
@@ -283,6 +295,7 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
     print('\n####################   -   Start sample selection   -   ####################')
     global x_train, y_train
 
+    # search for reprojected files
     res_path = os.path.join(path, out_folder_resampled_scenes)
     raster_file_list, raster_file_name = parse_folder(res_path, raster_ext)
     print(f'{res_path} contains {len(raster_file_list)} resampled raster files \n')
@@ -295,11 +308,12 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
     ref_p = np.array(ref_p.GetRasterBand(1).ReadAsArray())
 
     print(f"Creating data frame with labels and pixel values from satellite images")
-
+    # saving reference product to DataFrame
     df = pd.DataFrame()
     labels = pd.Series(np.array(ref_p[:]).flat)  # read the class labels
     df['Label_nr'] = labels
 
+    # saving satellite images to DataFrame
     for i in range(len_ras_li):
         file = gdal.Open(raster_file_list[i])
         file = np.array(file.GetRasterBand(1).ReadAsArray())
@@ -313,6 +327,7 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
     raster[raster == -99] = np.nan
     mask = np.isnan(raster)
 
+    # cleaning data frame
     data = df
     data = data.iloc[:, 1:]
     df2 = df[df != -99]  # remove all -99 values from data frame
@@ -320,6 +335,7 @@ def select_samples(path, path_ref_p, out_ref_p, out_folder_resampled_scenes, ras
 
     print(f"Removing -99 and NaN-values from data frame")
 
+    # selecting sampels from DataFrame
     if sss:
         print('\n##########   -   Using StratifiedShuffleSplit from sklearn.model_selection  -   ##########')
         row_count = df2.shape[1]  # get max rows from data frame
@@ -435,7 +451,10 @@ def tif_visualize(path, out_folder_prediction, filename, raster_ext):
     -------
     This function has no return
     """
+    # open result
     result = rasterio.open(os.path.join(path, out_folder_prediction, filename + "." + raster_ext))
+
+    # creating plot and legend
     fig, ax = plt.subplots(figsize=(6, 6))
     cmap = mpl.colors.ListedColormap(['white', 'cyan', 'royalblue'])
     white_box = mpatches.Patch(color='white', label='not flooded')
@@ -444,6 +463,8 @@ def tif_visualize(path, out_folder_prediction, filename, raster_ext):
     ax.legend(handles=[white_box, blue_box, red_box], title='Classes', handlelength=0.7, bbox_to_anchor=(1.05, 0.45),
               loc='lower left', borderaxespad=0.)
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+
+    # plot result
     show(result,
          transform=result.transform, title="Classification result", ax=ax, cmap=cmap)
     plt.show()

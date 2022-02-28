@@ -1,6 +1,6 @@
 """
 random_forest.py: In the script, the random forest is created, fitted to the data, and the labels are predicted.
-@author: Felix Bachmann
+@author: Felix Bachmann, Anastasiia Vynohradova
 """
 
 import numpy as np
@@ -131,12 +131,13 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
         Array with predicted labels
     """
     print('\n##########   -   Staring parameter tuning   -   ##########')
+    # creating search grid
     search_grid = {'n_estimators': [int(x) for x in np.linspace(start=min_estimator, stop=max_estimator,
                                                                 num=value_generator)],
                    'max_features': ['auto', 'sqrt'],
                    'max_depth': [int(x) for x in np.linspace(start=min_depth_t, stop=max_depth_t,
                                                              num=value_generator)]}
-
+    # searching for Parameters
     tune_model = ensemble.RandomForestClassifier()
     tune_model_grid = RandomizedSearchCV(
         estimator=tune_model,
@@ -147,6 +148,7 @@ def rf_parameter_tuning(x_train, y_train, data, min_depth_t, max_depth_t, min_es
         random_state=random_state,
         n_jobs=n_cores)
 
+    # fitting and prediction
     tune_model_grid.fit(x_train, y_train)
     best_model = tune_model_grid.best_estimator_
     print(f"Best performing RandomForestModel has the following parameters: {best_model} \n")
